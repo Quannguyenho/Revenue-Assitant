@@ -2,6 +2,7 @@ const http = require("http");
 const { config, publicConfig, saveLocalSetup } = require("./config");
 const { fetchRecentEmails, diagnoseImap } = require("./imapClient");
 const { fetchPayPalTransactions, diagnosePayPal } = require("./paypalClient");
+const { fetchRoundcubeEmails, diagnoseRoundcube } = require("./roundcubeClient");
 const { parsePaymentEmail } = require("./paypalParser");
 const { parsePayPalCsv } = require("./csvImport");
 const { readJson, writeJson } = require("./processedStore");
@@ -100,6 +101,12 @@ function safeError(error) {
       error: "PayPal API credentials are missing. Open Local Sync Setup and save the PayPal Client ID and Secret."
     };
   }
+  if (/Roundcube|webmail/i.test(message)) {
+    return {
+      errorCode: "ROUNDCUBE_WEBMAIL_FAILED",
+      error: message.replace(/password[^.]+/ig, "password hidden")
+    };
+  }
   return { errorCode: "LOCAL_EMAIL_SYNC_ERROR", error: message || "Local Email Sync failed." };
 }
 
@@ -107,14 +114,16 @@ async function syncMailbox() {
   if (String(config.sourceMode || "").toLowerCase() === "paypal") {
     return syncPayPal();
   }
-  const emails = await fetchRecentEmails(config);
+  const mode = String(config.sourceMode || "").toLowerCase();
+  const emails = mode === "roundcube" ? await fetchRoundcubeEmails(config) : await fetchRecentEmails(config);
   const matched = [];
   for (const email of emails) {
     if (!keywordMatch(email.body)) continue;
     const parsed = parsePaymentEmail(email.body);
     matched.push({
       ...parsed,
-      id: `imap-${email.uid}`,
+      source: mode === "roundcube" ? "roundcubeWebmail" : parsed.source,
+      id: `${mode === "roundcube" ? "roundcube" : "imap"}-${email.uid}`,
       sourceMessageId: String(email.uid),
       receivedAt: new Date().toISOString()
     });
@@ -125,9 +134,9 @@ async function syncMailbox() {
   const payload = {
     ok: true,
     service: "RevenueFlow Local Email Sync",
-    version: "1.1.0",
-    mode: "local-imap",
-    mailbox: config.imap.user,
+    version: "1.2.0",
+    mode: mode === "roundcube" ? "roundcube-webmail" : "local-imap",
+    mailbox: mode === "roundcube" ? config.roundcube.user : config.imap.user,
     scanned: emails.length,
     matched: records.length,
     records,
@@ -155,7 +164,7 @@ async function syncPayPal() {
   const payload = {
     ok: true,
     service: "RevenueFlow Local Email Sync",
-    version: "1.1.0",
+    version: "1.2.0",
     mode: "paypal-api",
     scanned: records.length,
     matched: records.length,
@@ -187,7 +196,7 @@ function importCsvRecords(csvText) {
   const payload = {
     ok: true,
     service: "RevenueFlow Local Email Sync",
-    version: "1.1.0",
+    version: "1.2.0",
     mode: "paypal-csv",
     scanned: records.length,
     matched: records.length,
@@ -223,6 +232,11 @@ function sourceStatus() {
       env: config.paypal.env,
       lookbackDays: config.paypal.lookbackDays
     },
+    roundcube: {
+      configured: Boolean(config.roundcube.user && config.roundcube.password),
+      url: config.roundcube.url,
+      mailbox: config.roundcube.mailbox || "INBOX"
+    },
     csv: {
       available: true,
       endpoint: "/import-csv"
@@ -245,7 +259,7 @@ async function handle(req, res) {
       return sendJson(res, 200, {
         ok: true,
         service: "RevenueFlow Local Email Sync",
-        version: "1.1.0",
+        version: "1.2.0",
         config: publicConfig()
       });
     }
@@ -255,7 +269,7 @@ async function handle(req, res) {
       return sendJson(res, 200, {
         ok: true,
         service: "RevenueFlow Local Email Sync",
-        version: "1.1.0",
+        version: "1.2.0",
         config: publicConfig(nextConfig)
       });
     }
@@ -263,7 +277,7 @@ async function handle(req, res) {
       return sendJson(res, 200, {
         ok: true,
         service: "RevenueFlow Local Email Sync",
-        version: "1.1.0",
+        version: "1.2.0",
         sources: sourceStatus()
       });
     }
@@ -273,7 +287,7 @@ async function handle(req, res) {
       return sendJson(res, 200, {
         ok: true,
         service: "RevenueFlow Local Email Sync",
-        version: "1.1.0",
+        version: "1.2.0",
         sources: sourceStatus(),
         config: publicConfig(nextConfig)
       });
@@ -282,19 +296,21 @@ async function handle(req, res) {
       return sendJson(res, 200, {
         ok: true,
         service: "RevenueFlow Local Email Sync",
-        version: "1.1.0",
-        mode: config.sourceMode === "paypal" ? "paypal-api" : "local-imap",
+        version: "1.2.0",
+        mode: config.sourceMode === "paypal" ? "paypal-api" : config.sourceMode === "roundcube" ? "roundcube-webmail" : "local-imap",
         sourceMode: config.sourceMode,
         mailboxConfigured: Boolean(config.imap.user && config.imap.password),
         mailbox: config.imap.user || "",
-        paypalConfigured: Boolean(config.paypal.clientId && config.paypal.clientSecret)
+        paypalConfigured: Boolean(config.paypal.clientId && config.paypal.clientSecret),
+        roundcubeConfigured: Boolean(config.roundcube.user && config.roundcube.password),
+        roundcubeMailbox: config.roundcube.user || ""
       });
     }
     if (req.url === "/paypal/health") {
       return sendJson(res, 200, {
         ok: true,
         service: "RevenueFlow Local Email Sync",
-        version: "1.1.0",
+        version: "1.2.0",
         mode: "paypal-api",
         paypalConfigured: Boolean(config.paypal.clientId && config.paypal.clientSecret),
         paypalEnv: config.paypal.env,
@@ -316,9 +332,29 @@ async function handle(req, res) {
         return sendJson(res, 200, {
           ok: true,
           service: "RevenueFlow Local Email Sync",
-          version: "1.1.0",
+          version: "1.2.0",
           mode: "paypal-api",
           paypal
+        });
+      }
+      if (String(config.sourceMode || "").toLowerCase() === "roundcube") {
+        const roundcube = await withTimeout(diagnoseRoundcube(config), 15000, {
+          ok: false,
+          url: config.roundcube.url,
+          mailbox: config.roundcube.mailbox || "INBOX",
+          mailboxConfigured: Boolean(config.roundcube.user && config.roundcube.password),
+          checks: [{
+            name: "timeout",
+            ok: false,
+            detail: "Roundcube diagnostics timed out. Check webmail URL, mailbox user, password, or network access."
+          }]
+        });
+        return sendJson(res, 200, {
+          ok: true,
+          service: "RevenueFlow Local Email Sync",
+          version: "1.2.0",
+          mode: "roundcube-webmail",
+          roundcube
         });
       }
       const diagnostics = await withTimeout(diagnoseImap(config), 12000, {
@@ -337,7 +373,7 @@ async function handle(req, res) {
       return sendJson(res, 200, {
         ok: true,
         service: "RevenueFlow Local Email Sync",
-        version: "1.1.0",
+        version: "1.2.0",
         mode: "local-imap",
         diagnostics
       });

@@ -69,6 +69,14 @@ This file keeps useful product and implementation decisions in one place so futu
 
 ## Current Release Note
 
+### v6.7.0
+
+- Added a Local Sync Roundcube Webmail fallback for cases where the mailbox opens in the browser but IMAP ports are blocked.
+- Local Sync can now run with `SOURCE_MODE=roundcube`, `ROUNDCUBE_URL`, `ROUNDCUBE_USER`, `ROUNDCUBE_PASSWORD`, and `ROUNDCUBE_MAILBOX`.
+- The Roundcube adapter logs in locally, reads message source through Roundcube, parses PayPal emails, and returns the same payment record payload as IMAP/PayPal API.
+- Extension Cloud Sync mode now falls back to Local Sync/Webmail automatically when the local Cloud Sync server is not reachable.
+- Webmail passwords remain in the local service process/config only; they are not stored in Chrome extension storage or packaged output.
+
 ### v6.6.0
 
 - Added internal Cloud Sync mode for the side panel, pointing to `http://127.0.0.1:8790` by default for local beta testing.

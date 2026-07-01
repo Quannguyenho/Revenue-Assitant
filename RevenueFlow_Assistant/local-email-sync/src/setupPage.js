@@ -45,6 +45,7 @@ function setupPage() {
       <div class="grid">
         <label>Nguồn dữ liệu
           <select id="sourceMode">
+            <option value="roundcube">Roundcube Webmail</option>
             <option value="paypal">PayPal API</option>
             <option value="imap">Mail host / IMAP</option>
           </select>
@@ -70,6 +71,25 @@ function setupPage() {
         </label>
         <label class="full">Client Secret
           <input id="paypalClientSecret" type="password" autocomplete="new-password" placeholder="Để trống nếu muốn giữ secret đã lưu">
+        </label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Roundcube Webmail</h2>
+      <p class="hint">Dung khi webmail mo duoc nhung IMAP bi firewall chan. Service local dang nhap webmail, doc source email PayPal, roi dua payment vao RevenueFlow.</p>
+      <div class="grid">
+        <label class="full">Webmail URL
+          <input id="roundcubeUrl" placeholder="https://example.com/webmail/">
+        </label>
+        <label>Mailbox user
+          <input id="roundcubeUser" autocomplete="off" placeholder="invoicing@example.com">
+        </label>
+        <label>Mailbox folder
+          <input id="roundcubeMailbox" placeholder="INBOX">
+        </label>
+        <label class="full">Webmail password
+          <input id="roundcubePassword" type="password" autocomplete="new-password" placeholder="De trong neu muon giu password da luu">
         </label>
       </div>
     </section>
@@ -167,12 +187,23 @@ function setupPage() {
           clientId: $("paypalClientId").value,
           clientSecret: $("paypalClientSecret").value,
           lookbackDays: $("paypalLookbackDays").value
+        },
+        roundcube: {
+          url: $("roundcubeUrl").value,
+          user: $("roundcubeUser").value,
+          password: $("roundcubePassword").value,
+          mailbox: $("roundcubeMailbox").value
         }
       };
     }
+    function modeLabel(value) {
+      if (value === "paypal") return "PayPal API";
+      if (value === "roundcube") return "Roundcube Webmail";
+      return "Mail host / IMAP";
+    }
     function fill(config) {
       $("sourceMode").value = config.sourceMode || "paypal";
-      $("modeBadge").textContent = $("sourceMode").value === "paypal" ? "PayPal API" : "Mail host / IMAP";
+      $("modeBadge").textContent = modeLabel($("sourceMode").value);
       $("maxMessages").value = config.maxMessages || 80;
       $("paymentKeywords").value = config.paymentKeywords || "";
       $("ignoreKeywords").value = config.ignoreKeywords || "";
@@ -184,6 +215,10 @@ function setupPage() {
       $("paypalEnv").value = config.paypal?.env || "live";
       $("paypalClientId").value = config.paypal?.clientId || "";
       $("paypalLookbackDays").value = config.paypal?.lookbackDays || 7;
+      $("roundcubeUrl").value = config.roundcube?.url || "https://cmsmart.net/webmail/";
+      $("roundcubeUser").value = config.roundcube?.user || "";
+      $("roundcubeMailbox").value = config.roundcube?.mailbox || "INBOX";
+      $("roundcubePassword").placeholder = config.roundcube?.passwordConfigured ? "Da luu password. De trong de giu nguyen." : "Chua co password";
       $("imapPassword").placeholder = config.imap?.passwordConfigured ? "Đã lưu password. Để trống để giữ nguyên." : "Chưa có password";
       $("paypalClientSecret").placeholder = config.paypal?.clientSecretConfigured ? "Đã lưu secret. Để trống để giữ nguyên." : "Chưa có secret";
     }
@@ -193,7 +228,7 @@ function setupPage() {
       setStatus("Đã tải cấu hình local.", true);
     }
     $("sourceMode").addEventListener("change", () => {
-      $("modeBadge").textContent = $("sourceMode").value === "paypal" ? "PayPal API" : "Mail host / IMAP";
+      $("modeBadge").textContent = modeLabel($("sourceMode").value);
     });
     $("save").addEventListener("click", async () => {
       setStatus("Đang lưu cấu hình...");
@@ -205,12 +240,13 @@ function setupPage() {
       fill(data.config);
       $("imapPassword").value = "";
       $("paypalClientSecret").value = "";
+      $("roundcubePassword").value = "";
       setStatus("Đã lưu. Có thể bấm Test connection hoặc Quét ngay.", true);
     });
     $("test").addEventListener("click", async () => {
       setStatus("Đang test connection...");
       const data = await api("/diagnostics");
-      setStatus(JSON.stringify(data, null, 2), data.diagnostics?.ok === true || data.paypal?.configured === true);
+      setStatus(JSON.stringify(data, null, 2), data.diagnostics?.ok === true || data.roundcube?.ok === true || data.paypal?.configured === true);
     });
     $("sync").addEventListener("click", async () => {
       setStatus("Đang quét nguồn payment...");

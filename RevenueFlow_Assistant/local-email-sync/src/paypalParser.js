@@ -15,6 +15,21 @@ function header(raw, name) {
   return match ? match[1].replace(/\n[\t ]+/g, " ").trim() : "";
 }
 
+function firstCustomerEmail(text) {
+  const explicit = find(text, [/Customer email\s*[:\n]?\s*([^\s<>"']+@[^\s<>"']+)/i]);
+  if (explicit) return explicit;
+  const matches = String(text || "").match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) || [];
+  return matches.find((email) => !/@(?:intl\.)?paypal\.com$/i.test(email) && !/^service@/i.test(email)) || "";
+}
+
+function cleanProduct(value) {
+  const product = String(value || "").trim().replace(/^["'<\s]+|[>"'\s]+$/g, "");
+  if (!product) return "";
+  if (/@(?:intl\.)?paypal\.com/i.test(product) || /^service@/i.test(product)) return "";
+  if (/^(from|to|reply-to|return-path)\b/i.test(product)) return "";
+  return product;
+}
+
 function dateVN(text) {
   const direct = String(text || "").match(/(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/);
   if (direct) return `${String(direct[1]).padStart(2, "0")}/${String(direct[2]).padStart(2, "0")}/${direct[3]}`;
@@ -48,10 +63,10 @@ function parsePaymentEmail(raw) {
     /(?:Total|Amount|Paid)\s*[:\n]\s*\$?([0-9,]+(?:\.\d{2})?)\s*USD/i,
     /\$([0-9,]+(?:\.\d{2})?)\s*USD/i
   ]).replace(/,/g, "");
-  const product = find(text, [
+  const product = cleanProduct(find(text, [
     /(?:^|\n)\s*For\s*[:\n]?\s*(?!Order number\b)([^\n]+)/im,
     /(?:Item|Product|Description|Service)\s*[:\n]?\s*([^\n]+)/i
-  ]);
+  ]));
   const transactionId = find(text, [
     /Transaction ID\s*[:\n]?\s*([A-Z0-9-]+)/i,
     /Payment ID\s*[:\n]?\s*([A-Z0-9-]+)/i
@@ -61,7 +76,7 @@ function parsePaymentEmail(raw) {
     /Order number\s*[:\n]?\s*([A-Z0-9-]+)/i,
     /Order ID\s*[:\n]?\s*([A-Z0-9-]+)/i
   ]);
-  const customerEmail = find(text, [/Customer email\s*[:\n]?\s*([^\s<>"']+@[^\s<>"']+)/i, /([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i]);
+  const customerEmail = firstCustomerEmail(text);
   const customerName = find(text, [/Customer name\s*[:\n]?\s*([^\n]+)/i, /payment from\s+(.+?)\s+for\s+/i]);
   const type = paymentType(text);
   const payProvider = provider(text, from);

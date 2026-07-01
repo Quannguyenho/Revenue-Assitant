@@ -22,3 +22,16 @@ Order number: fc27798340`);
   assert.equal(record.customerEmail, "labarrit@gmail.com");
   assert.equal(record.orderNo, "fc27798340");
 });
+
+test("does not use PayPal sender address as customer or product", () => {
+  const record = parsePaymentEmail(`Subject: Payment notice
+From: service@intl.paypal.com
+
+For
+service@intl.paypal.com
+Amount received
+$39.99 USD`);
+  assert.equal(record.customerEmail, "");
+  assert.equal(record.product, "");
+  assert.equal(record.needReview, true);
+});

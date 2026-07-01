@@ -5,6 +5,7 @@ Local payment connector for internal business use. It can read a domain mailbox 
 ## What It Does
 
 - Connects to an IMAP mailbox such as `srv.cmsmart.net`.
+- Can use a Roundcube webmail URL when the webmail page opens but IMAP ports are blocked.
 - Reads payment-related emails with read-only IMAP commands.
 - Extracts payment records.
 - Serves records locally at `http://127.0.0.1:8787`.
@@ -26,6 +27,7 @@ Local payment connector for internal business use. It can read a domain mailbox 
 2. Open:
    `http://127.0.0.1:8787/setup`
 3. Choose:
+   - `Roundcube Webmail` when webmail opens in the browser but IMAP is blocked,
    - `PayPal API` for direct PayPal transaction sync, or
    - `Mail host / IMAP` for a domain mailbox.
 4. Click `Save`, then `Test connection`.
@@ -54,6 +56,20 @@ PAYPAL_LOOKBACK_DAYS=7
 Then click scan in RevenueFlow.
 
 The service calls PayPal Transaction Search and returns the same local record format as the IMAP connector.
+
+## Roundcube Webmail fallback
+
+Use this when the mailbox is readable in Roundcube, but IMAP ports such as `993` are blocked by the mail host or firewall.
+
+```text
+SOURCE_MODE=roundcube
+ROUNDCUBE_URL=https://cmsmart.net/webmail/
+ROUNDCUBE_USER=your-mailbox@example.com
+ROUNDCUBE_PASSWORD=your-webmail-password
+ROUNDCUBE_MAILBOX=INBOX
+```
+
+The service logs in to Roundcube locally, reads message source through Roundcube, parses PayPal payment emails, and returns the same `/latest` record format as IMAP. It does not store the webmail password in the Chrome extension.
 
 ## PayPal CSV fallback
 

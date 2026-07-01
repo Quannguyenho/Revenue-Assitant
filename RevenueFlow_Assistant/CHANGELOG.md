@@ -1,4 +1,13 @@
 
+## v6.7.0 - Roundcube Webmail Fallback
+
+- Updated the package version to `6.7.0`.
+- Added Local Sync `roundcube` source mode so internal users can read a Roundcube mailbox when IMAP is blocked but webmail works.
+- Added Roundcube setup fields for webmail URL, mailbox user, mailbox folder, and password in the local setup page.
+- Added Roundcube diagnostics and tests for message-list parsing and email-source normalization.
+- Added Cloud Sync-to-Local Sync fallback in the extension when `http://127.0.0.1:8790` is not reachable.
+- Kept webmail passwords out of Chrome extension storage and packaged output.
+
 ## v6.6.0 - Internal Cloud Sync Bridge
 
 - Updated the package version to `6.6.0`.

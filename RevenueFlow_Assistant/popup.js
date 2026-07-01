@@ -72,7 +72,7 @@ function serializePaymentSourceRules(rules) {
 }
 
 const defaultConfig = {
-  configVersion: "6.6.0",
+  configVersion: "6.7.0",
   rate: 26124,
   product: "",
   rulesText: defaultRules.map((r) => `${r.amount}=${r.name}`).join("\n"),
@@ -4594,6 +4594,22 @@ function cloudSyncFriendlyError(rawError = "", code = "") {
   return value || (config.language === "en" ? "Cloud Sync request failed." : "Cloud Sync chưa xử lý được yêu cầu.");
 }
 
+function canFallbackToLocalSync(error) {
+  if (!isCloudSyncMode()) return false;
+  const value = String(error && error.message ? error.message : error || "").toLowerCase();
+  return /cloud sync is not reachable|chưa kết nối được cloud sync|failed to fetch|load failed|networkerror|unable to connect|connection refused/.test(value);
+}
+
+async function switchToLocalSyncFallback() {
+  config.emailSourceMode = "localimap";
+  config.bridgeUrl = config.bridgeUrl || defaultConfig.bridgeUrl;
+  await saveConfig();
+  setStatus(config.language === "en"
+    ? "Cloud Sync is not running, so RevenueFlow switched to Local Sync/Webmail."
+    : "Cloud Sync chưa chạy, RevenueFlow đã chuyển sang Local Sync/Webmail.",
+    "warning");
+}
+
 async function localBridgeRequest(path, options = {}) {
   let res;
   try {
@@ -4727,7 +4743,14 @@ async function checkEmailBridge() {
   try {
     if (isCloudSyncMode()) {
       setStatus(config.language === "en" ? "Checking Cloud Sync..." : "Đang kiểm tra Cloud Sync...", "ready");
-      return await checkCloudSyncBridge();
+      try {
+        return await checkCloudSyncBridge();
+      } catch (error) {
+        if (!canFallbackToLocalSync(error)) throw error;
+        await switchToLocalSyncFallback();
+        setStatus(config.language === "en" ? "Checking local Email Sync..." : "Đang kiểm tra Email Sync local...", "ready");
+        return await checkLocalEmailBridge();
+      }
     }
     if (isLocalEmailSyncMode()) {
       setStatus(config.language === "en" ? "Checking local Email Sync..." : "Đang kiểm tra Email Sync local...", "ready");
@@ -4784,7 +4807,13 @@ async function syncEmailBridge() {
   setBridgeStatus(t("bridgeStatusSyncing"), "warning");
   try {
     if (isCloudSyncMode()) {
-      return await syncCloudSyncBridge();
+      try {
+        return await syncCloudSyncBridge();
+      } catch (error) {
+        if (!canFallbackToLocalSync(error)) throw error;
+        await switchToLocalSyncFallback();
+        return await syncLocalEmailBridge();
+      }
     }
     if (isLocalEmailSyncMode()) {
       return await syncLocalEmailBridge();
@@ -4816,11 +4845,18 @@ async function startPaymentWorkflow() {
     : (config.language === "en" ? "Scanning Gmail and preparing the latest payment..." : "Đang quét Gmail và chuẩn bị payment mới nhất..."),
     "ready");
   try {
-    const recordsFromBridge = isCloudSyncMode()
-      ? await syncCloudSyncBridge()
-      : isLocalEmailSyncMode()
-        ? await syncLocalEmailBridge()
-        : await scanGmailPayments();
+    let recordsFromBridge;
+    if (isCloudSyncMode()) {
+      try {
+        recordsFromBridge = await syncCloudSyncBridge();
+      } catch (error) {
+        if (!canFallbackToLocalSync(error)) throw error;
+        await switchToLocalSyncFallback();
+        recordsFromBridge = await syncLocalEmailBridge();
+      }
+    } else {
+      recordsFromBridge = isLocalEmailSyncMode() ? await syncLocalEmailBridge() : await scanGmailPayments();
+    }
     if (!isLocalEmailSyncMode() && !isCloudSyncMode()) renderGmailSyncStatus(recordsFromBridge);
     const selected = recordsFromBridge.find((record) => !record.needReview) || recordsFromBridge[0];
     if (!selected) {

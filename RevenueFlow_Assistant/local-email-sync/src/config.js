@@ -39,7 +39,7 @@ function buildConfig() {
   const env = { ...fileEnv, ...process.env };
   return {
     rootDir,
-    sourceMode: oneOf(env.SOURCE_MODE, ["imap", "paypal"], "imap"),
+    sourceMode: oneOf(env.SOURCE_MODE, ["imap", "paypal", "roundcube"], "imap"),
     host: env.HOST || "127.0.0.1",
     port: Number(env.PORT || 8787),
     imap: {
@@ -58,6 +58,12 @@ function buildConfig() {
       clientId: env.PAYPAL_CLIENT_ID || "",
       clientSecret: env.PAYPAL_CLIENT_SECRET || "",
       lookbackDays: Math.max(1, Math.min(31, Number(env.PAYPAL_LOOKBACK_DAYS || 7)))
+    },
+    roundcube: {
+      url: env.ROUNDCUBE_URL || "https://cmsmart.net/webmail/",
+      user: env.ROUNDCUBE_USER || env.IMAP_USER || "",
+      password: env.ROUNDCUBE_PASSWORD || "",
+      mailbox: env.ROUNDCUBE_MAILBOX || env.IMAP_MAILBOX || "INBOX"
     },
     outputFile: path.resolve(rootDir, env.OUTPUT_FILE || "output/latest-records.json")
   };
@@ -92,6 +98,12 @@ function publicConfig(current = config) {
       clientSecretConfigured: Boolean(current.paypal.clientSecret),
       lookbackDays: current.paypal.lookbackDays
     },
+    roundcube: {
+      url: current.roundcube.url,
+      user: current.roundcube.user,
+      mailbox: current.roundcube.mailbox,
+      passwordConfigured: Boolean(current.roundcube.password)
+    },
     paymentKeywords: current.paymentKeywords.join(", "),
     ignoreKeywords: current.ignoreKeywords.join(", ")
   };
@@ -121,6 +133,10 @@ function writeEnvFile(values) {
     "PAYPAL_CLIENT_ID",
     "PAYPAL_CLIENT_SECRET",
     "PAYPAL_LOOKBACK_DAYS",
+    "ROUNDCUBE_URL",
+    "ROUNDCUBE_USER",
+    "ROUNDCUBE_PASSWORD",
+    "ROUNDCUBE_MAILBOX",
     "OUTPUT_FILE"
   ];
   const keys = [...orderedKeys, ...Object.keys(values).filter((key) => !orderedKeys.includes(key)).sort()];
@@ -134,7 +150,7 @@ function writeEnvFile(values) {
 function saveLocalSetup(input = {}) {
   const existing = parseEnvFile(envPath);
   const next = { ...existing };
-  const sourceMode = oneOf(input.sourceMode || next.SOURCE_MODE, ["imap", "paypal"], "imap");
+  const sourceMode = oneOf(input.sourceMode || next.SOURCE_MODE, ["imap", "paypal", "roundcube"], "imap");
   next.SOURCE_MODE = sourceMode;
   next.HOST = input.host || next.HOST || "127.0.0.1";
   next.PORT = String(Math.max(1, Math.min(65535, Number(input.port || next.PORT || 8787))));
@@ -156,6 +172,13 @@ function saveLocalSetup(input = {}) {
     next.PAYPAL_CLIENT_ID = String(input.paypal.clientId || next.PAYPAL_CLIENT_ID || "").trim();
     if (String(input.paypal.clientSecret || "").trim()) next.PAYPAL_CLIENT_SECRET = String(input.paypal.clientSecret).trim();
     next.PAYPAL_LOOKBACK_DAYS = String(Math.max(1, Math.min(31, Number(input.paypal.lookbackDays || next.PAYPAL_LOOKBACK_DAYS || 7))));
+  }
+
+  if (input.roundcube) {
+    next.ROUNDCUBE_URL = String(input.roundcube.url || next.ROUNDCUBE_URL || "https://cmsmart.net/webmail/").trim();
+    next.ROUNDCUBE_USER = String(input.roundcube.user || next.ROUNDCUBE_USER || next.IMAP_USER || "").trim();
+    if (String(input.roundcube.password || "").trim()) next.ROUNDCUBE_PASSWORD = String(input.roundcube.password).trim();
+    next.ROUNDCUBE_MAILBOX = String(input.roundcube.mailbox || next.ROUNDCUBE_MAILBOX || next.IMAP_MAILBOX || "INBOX").trim();
   }
 
   writeEnvFile(next);
