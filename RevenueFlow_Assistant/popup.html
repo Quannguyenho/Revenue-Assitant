@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RevenueFlow Assistant</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="ux-v23 compact-ui">
+  <header class="app-header ux-header">
+    <img class="brand-logo" src="icons/icon48.png" alt="">
+    <div>
+      <div class="app-brand-line">
+        <h1 data-i18n="appTitle">RevenueFlow Assistant</h1>
+        <span id="appVersion" class="version-badge"></span>
+      </div>
+      <p data-i18n="appDesc"></p>
+    </div>
+    <div class="header-actions">
+      <a id="aboutLink" class="icon-button about-button" href="about.html" target="_blank" rel="noopener" data-title-i18n="aboutTitle" aria-label="About and privacy" title="About and privacy"><span aria-hidden="true">i</span></a>
+      <button id="settingsToggle" class="icon-button" type="button" data-title-i18n="settingsToggleTitle" aria-expanded="false"><span aria-hidden="true">⚙</span></button>
+      <button id="languageToggle" class="icon-button" type="button" data-title-i18n="languageTitle">VI</button>
+      <button id="themeToggle" class="icon-button" type="button" data-title-i18n="themeTitle"><span aria-hidden="true">◐</span></button>
+    </div>
+  </header>
+
+  <div id="status" class="status ready" role="status"></div>
+  <div id="quickFixActions" class="quick-fix-actions" hidden></div>
+  <section id="guidedSetupCard" class="guided-setup-card" hidden>
+    <div>
+      <span class="guided-step-pill" id="guidedSetupStep">1/3</span>
+      <strong id="guidedSetupTitle"></strong>
+      <p id="guidedSetupHelp"></p>
+    </div>
+    <button id="guidedSetupAction" class="primary" type="button"></button>
+  </section>
+
+  <section id="oauthSetupCard" class="oauth-setup-card" hidden>
+    <strong data-i18n="oauthSetupTitle"></strong>
+    <p data-i18n="oauthSetupHelp"></p>
+    <div class="oauth-id-row">
+      <code id="oauthExtensionId"></code>
+      <button id="copyOAuthExtensionId" class="ghost" type="button" data-i18n="copyOAuthExtensionId"></button>
+    </div>
+  </section>
+
+  <section class="home-summary-strip" aria-label="Workspace summary">
+    <div class="summary-chip"><strong data-i18n="stepSyncTitle"></strong><span data-i18n="quickStartHelp"></span></div>
+    <div class="summary-chip"><strong data-i18n="stepReviewTitle"></strong><span data-i18n="reviewHelp"></span></div>
+    <div class="summary-chip"><strong data-i18n="stepWriteTitle"></strong><span data-i18n="sheetHelp"></span></div>
+  </section>
+
+  <section class="ux-hero-panel simplified-hero" aria-label="RevenueFlow home">
+    <div class="ux-hero-top">
+      <div>
+        <span class="eyebrow soft-eyebrow" data-i18n="quickStartEyebrow"></span>
+        <h2 data-i18n="quickStartTitle"></h2>
+        <p data-i18n="quickStartHelp"></p>
+      </div>
+      <span id="bridgeStatus" class="badge ux-live-badge" data-state="idle">-</span>
+    </div>
+
+    <div class="gmail-account-bar">
+      <div>
+        <small data-i18n="gmailAccountLabel"></small>
+        <strong id="gmailAccountEmail" data-i18n="gmailAccountDisconnected"></strong>
+        <small class="gmail-source-help" data-i18n="gmailSourceHelp"></small>
+      </div>
+      <button id="connectGmailAccount" class="ghost" type="button" data-i18n="connectGmailAccount"></button>
+    </div>
+    <div id="accountSwitchHelp" class="account-switch-help" hidden>
+      <p data-i18n="accountSwitchHelp"></p>
+      <button id="disconnectGmailAccount" class="ghost" type="button" data-i18n="disconnectGmailAccount"></button>
+    </div>
+    <div class="privacy-notice">
+      <strong data-i18n="privacyNoticeTitle"></strong>
+      <span data-i18n="privacyNoticeText"></span>
+      <a href="privacy-policy.html" target="_blank" rel="noopener" data-i18n="privacyNoticeLink"></a>
+    </div>
+    <div id="oauthUserLog" class="oauth-user-log" hidden></div>
+
+    <div class="setup-checklist" aria-label="RevenueFlow setup checklist">
+      <div class="setup-check-item" id="setupGmailItem">
+        <span class="setup-dot">1</span>
+        <div><strong data-i18n="setupGmailStep"></strong><small id="setupGmailState"></small></div>
+      </div>
+      <div class="setup-check-item" id="setupSheetItem">
+        <span class="setup-dot">2</span>
+        <div><strong data-i18n="setupSheetStep"></strong><small id="setupSheetState"></small></div>
+      </div>
+      <div class="setup-check-item" id="setupScanItem">
+        <span class="setup-dot">3</span>
+        <div><strong data-i18n="setupScanStep"></strong><small id="setupScanState"></small></div>
+      </div>
+    </div>
+    <div class="setup-actions">
+      <button id="setupConnectGmail" class="ghost" type="button" data-i18n="quickFixConnectGmail"></button>
+      <button id="setupCreateSheet" class="ghost" type="button" data-i18n="quickFixCreateSheet"></button>
+      <button id="setupScanPayments" class="ghost" type="button" data-i18n="quickFixTryAgain"></button>
+      <button id="loadDemoPayment" class="ghost" type="button" data-i18n="loadDemoPayment"></button>
+    </div>
+
+    <div class="ux-main-actions">
+      <button id="quickSyncBridge" class="primary ux-main-button" type="button" data-i18n="syncEmailNow"></button>
+      <button id="quickImportBridgePayment" class="secondary ux-main-secondary" type="button" data-i18n="importLatestPayment"></button>
+    </div>
+
+    <div class="ux-mini-actions">
+      <button id="quickViewBridgeRecords" class="ghost" type="button" data-i18n="viewLatestRecords"></button>
+      <button id="quickCheckBridge" class="ghost" type="button" data-i18n="checkBridge"></button>
+      <button id="quickOpenBridgeSetup" class="ghost" type="button" data-i18n="openBridgeSetup"></button>
+    </div>
+
+    <div class="ux-status-grid">
+      <div class="ux-stat-card"><small data-i18n="bridgeServiceStateLabel"></small><strong id="bridgeServiceState">-</strong></div>
+      <div class="ux-stat-card"><small data-i18n="bridgeLastSyncLabel"></small><strong id="bridgeLastSync">-</strong></div>
+      <div class="ux-stat-card"><small data-i18n="bridgeMatchedLabel"></small><strong id="bridgeMatched">0</strong></div>
+      <div class="ux-stat-card"><small data-i18n="bridgeNeedReviewLabel"></small><strong id="bridgeNeedReview">0</strong></div>
+      <div class="ux-stat-card ux-hidden-stat"><small data-i18n="bridgeNextSyncLabel"></small><strong id="bridgeNextSync">-</strong></div>
+      <div class="ux-stat-card ux-hidden-stat"><small data-i18n="bridgeScannedLabel"></small><strong id="bridgeScanned">0</strong></div>
+      <div class="ux-stat-card ux-hidden-stat"><small data-i18n="bridgeDuplicateLabel"></small><strong id="bridgeDuplicates">0</strong></div>
+    </div>
+  </section>
+
+  <section class="ux-flow-strip" aria-label="Simple workflow">
+    <div class="ux-flow-item active"><span>1</span><strong data-i18n="stepSyncTitle"></strong></div>
+    <div class="ux-flow-item"><span>2</span><strong data-i18n="stepReviewTitle"></strong></div>
+    <div class="ux-flow-item"><span>3</span><strong data-i18n="stepWriteTitle"></strong></div>
+  </section>
+
+  <div class="workspace-grid">
+
+  <section class="section revenue-dashboard ux-card-panel analytics-panel">
+    <div class="section-title dashboard-title">
+      <div><h2 data-i18n="dashboardTitle"></h2><p data-i18n="dashboardHelp"></p></div>
+      <button id="dashboardExportCsv" class="ghost" type="button" data-i18n="exportCsv"></button>
+    </div>
+    <div class="dashboard-stats">
+      <div><small data-i18n="monthRevenueLabel"></small><strong id="monthRevenue">$0.00</strong></div>
+      <div><small data-i18n="paymentCountLabel"></small><strong id="dashboardPaymentCount">0</strong></div>
+      <div><small data-i18n="duplicateCountLabel"></small><strong id="dashboardDuplicateCount">0</strong></div>
+    </div>
+    <div id="revenueChart" class="revenue-chart" aria-label="Monthly revenue chart"></div>
+  </section>
+
+  <section class="section payment-inbox-panel ux-card-panel">
+    <div class="section-title">
+      <div>
+        <h2 data-i18n="paymentInboxTitle"></h2>
+        <p data-i18n="paymentInboxHelp"></p>
+        <small id="paymentInboxScanSummary" class="payment-inbox-scan-summary"></small>
+      </div>
+      <span id="paymentInboxCount" class="badge">0</span>
+    </div>
+    <div class="inbox-filters">
+      <label><span data-i18n="providerFilterShort"></span><select id="providerFilter"></select></label>
+      <label><span data-i18n="emailTypeFilterShort"></span><select id="emailTypeFilter"></select></label>
+      <label><span data-i18n="sheetFilterShort"></span><select id="sheetStatusFilter"><option value="all" data-i18n="sheetFilterAll"></option><option value="written" data-i18n="sheetFilterWritten"></option><option value="not_written" data-i18n="sheetFilterNotWritten"></option><option value="not_revenue" data-i18n="sheetFilterNotRevenue"></option></select></label>
+    </div>
+    <div class="smart-inbox-filters" role="tablist" aria-label="Smart Inbox filters">
+      <button type="button" class="smart-filter active" data-status-filter="all" data-i18n="smartFilterAll"></button>
+      <button type="button" class="smart-filter" data-status-filter="ready" data-i18n="smartFilterReady"></button>
+      <button type="button" class="smart-filter" data-status-filter="review" data-i18n="smartFilterReview"></button>
+      <button type="button" class="smart-filter" data-status-filter="duplicate" data-i18n="smartFilterDuplicate"></button>
+      <button type="button" class="smart-filter" data-status-filter="saved" data-i18n="smartFilterSaved"></button>
+    </div>
+    <div id="bulkReadyBar" class="bulk-ready-bar" hidden>
+      <div><strong id="bulkReadyCount">0</strong><span data-i18n="bulkReadyLabel"></span></div>
+      <button id="bulkCopyReady" class="ghost" type="button" data-i18n="bulkCopyReady"></button>
+      <button id="bulkSaveReady" class="primary" type="button" data-i18n="bulkSaveReady"></button>
+    </div>
+    <div id="bulkQueueSummary" class="bulk-queue-summary" hidden></div>
+    <div class="payment-inbox-table-wrap ux-table-card">
+      <table class="payment-inbox-table">
+        <thead>
+          <tr>
+            <th data-i18n="inboxStatusColumn"></th>
+            <th data-i18n="inboxDateColumn"></th>
+            <th data-i18n="inboxCustomerColumn"></th>
+            <th data-i18n="inboxAmountColumn"></th>
+            <th data-i18n="inboxTypeColumn"></th>
+          </tr>
+        </thead>
+        <tbody id="paymentInboxBody"></tbody>
+      </table>
+    </div>
+    <div id="paymentInboxEmpty" class="empty-state" data-i18n="paymentInboxEmpty"></div>
+    <div id="paymentDetailCard" class="payment-detail-card" hidden></div>
+  </section>
+
+  <section class="section extracted-panel ux-card-panel">
+    <div class="section-title">
+      <div>
+        <h2 data-i18n="extractedTitle"></h2>
+        <p class="ux-section-help" data-i18n="extractedHelp"></p>
+      </div>
+      <div class="review-title-actions">
+        <button id="reviewMore" class="icon-mini" type="button" data-title-i18n="reviewMoreTitle" aria-label="More actions">...</button>
+        <span id="confidenceBadge" class="badge">-</span>
+      </div>
+    </div>
+    <div id="reviewMoreMenu" class="review-more-menu" hidden>
+      <button id="clearCurrentPayment" class="ghost" type="button" data-i18n="clearCurrentPayment"></button>
+      <button id="removeCurrentPayment" class="ghost danger-outline" type="button" data-i18n="removeCurrentPayment"></button>
+    </div>
+    <select id="recordSelect" hidden></select>
+
+    <div class="form-grid ux-form-grid">
+      <label><span data-i18n="dateLabel"></span><input id="fieldDate" data-field="date" data-placeholder-i18n="datePlaceholder"></label>
+      <label><span data-i18n="emailTypeLabel"></span><input id="fieldType" data-field="type" data-placeholder-i18n="emailTypePlaceholder"></label>
+      <label><span data-i18n="customerLabel"></span><input id="fieldCustomerName" data-field="customerName"></label>
+      <label><span data-i18n="emailLabel"></span><input id="fieldCustomerEmail" data-field="customerEmail"></label>
+      <label><span data-i18n="referenceLabel"></span><input id="fieldOrderNo" data-field="orderNo"></label>
+      <label><span data-i18n="usdLabel"></span><input id="fieldUsd" data-field="usd" type="number" step="0.01"></label>
+      <label><span data-i18n="transactionLabel"></span><input id="fieldTransactionId" data-field="transactionId"></label>
+      <label><span data-i18n="profileLabel"></span><input id="fieldProfileId" data-field="profileId"></label>
+    </div>
+
+    <div class="ux-product-field">
+      <span data-i18n="productLabel"></span>
+      <div class="product-select-row">
+        <select id="product"></select>
+        <button id="quickAddProductInline" class="icon-mini primary-mini" type="button" data-title-i18n="addProduct" aria-label="Add product">+</button>
+      </div>
+      <input id="customProductName" data-placeholder-i18n="quickProductNamePlaceholder">
+    </div>
+    <div class="product-quick-tools" aria-label="Customize products">
+      <div class="product-quick-inputs">
+        <input id="quickProductAmount" type="number" min="0" step="0.01" placeholder="USD">
+        <input id="quickProductName" data-placeholder-i18n="quickProductNamePlaceholder">
+      </div>
+      <div class="product-quick-actions">
+        <button id="quickAddProduct" class="ghost" type="button" data-i18n="addProduct"></button>
+        <button id="quickUndoProductChange" class="ghost" type="button" data-i18n="undoProductChange"></button>
+        <button id="quickDeleteProduct" class="ghost danger-outline" type="button" data-i18n="deleteSelectedProduct"></button>
+      </div>
+    </div>
+    <div id="productRuleSuggestion" class="smart-suggestion" data-smart-tip="productRules" hidden>
+      <div>
+        <strong data-i18n="productRuleTipTitle"></strong>
+        <p data-i18n="productRuleTipText"></p>
+      </div>
+      <div class="smart-suggestion-actions">
+        <button id="openProductRulesSettings" class="ghost" type="button" data-i18n="openProductRuleSettings"></button>
+        <label class="dont-show-tip"><input id="dismissProductRuleTip" type="checkbox"><span data-i18n="dontShowTipAgain"></span></label>
+      </div>
+    </div>
+    <div class="revenue-review-grid">
+      <label><span data-i18n="providerLabel"></span><input id="reviewProvider" readonly></label>
+      <label><span data-i18n="emailTypeLabel"></span><input id="reviewEmailType" readonly></label>
+      <label><span data-i18n="statusLabel"></span><input id="reviewStatus" readonly></label>
+      <label><span data-i18n="revenueImpactLabel"></span><input id="reviewRevenueImpact" readonly></label>
+    </div>
+    <div class="custom-fields-panel">
+      <div class="custom-fields-head">
+        <span data-i18n="customFieldsTitle"></span>
+        <button id="addCustomField" class="icon-mini primary-mini" type="button" data-title-i18n="addCustomFieldTitle" aria-label="Add detail">+</button>
+      </div>
+      <div class="custom-fields-sheet-row">
+        <label class="check compact-check"><input id="writeCustomFields" type="checkbox"><span data-i18n="writeCustomFieldsLabel"></span></label>
+        <label><span data-i18n="customFieldsSheetColumnLabel"></span><input id="customFieldsSheetColumn" placeholder="L"></label>
+      </div>
+      <div id="customFieldsList" class="custom-fields-list"></div>
+    </div>
+    <label class="revenue-write-toggle"><input id="shouldWriteRevenue" type="checkbox"><span data-i18n="allowRevenueWriteLabel"></span></label>
+    <div id="revenueWriteReason" class="revenue-write-reason"></div>
+    <div id="confidenceList" class="confidence-list"></div>
+    <div id="warnings" class="warnings" hidden></div>
+    <div id="reviewReadiness" class="review-readiness" data-state="empty"></div>
+    <div id="reviewSummaryCard" class="review-summary-card" hidden></div>
+  </section>
+
+  <section class="section sheet-output-panel ux-card-panel ux-save-panel">
+    <div class="section-title">
+      <div>
+        <h2 data-i18n="sheetRowTitle"></h2>
+        <p class="ux-section-help" data-i18n="sheetHelp"></p>
+      </div>
+    </div>
+    <div class="sheet-destination">
+      <div><small data-i18n="googleSheetLabel"></small><strong id="sheetTargetSummary" data-i18n="sheetTargetReady"></strong></div>
+      <button id="openSheet" class="ghost" type="button" data-i18n="openSheet"></button>
+    </div>
+    <details class="quick-sheet-config">
+      <summary><span data-i18n="sheetQuickSettingsTitle"></span><small data-i18n="sheetQuickSettingsHelp"></small></summary>
+      <div class="quick-sheet-grid">
+        <label class="quick-sheet-wide"><span data-i18n="sheetUrlLabel"></span><input id="sheetUrl" data-placeholder-i18n="sheetUrlPlaceholder"></label>
+        <label><span data-i18n="sheetNameLabel"></span><input id="sheetName" data-placeholder-i18n="typeHerePlaceholder"></label>
+        <label><span data-i18n="sheetStartCellLabel"></span><input id="sheetStartCell" placeholder="B9"></label>
+        <label><span data-i18n="sheetDirectionLabel"></span><select id="sheetDirection"></select></label>
+        <label><span data-i18n="invoiceNoLabel"></span><input id="invoiceNo" data-placeholder-i18n="invoiceNoPlaceholder"></label>
+        <label><span data-i18n="invoiceDateLabel"></span><input id="invoiceDate" data-placeholder-i18n="datePlaceholder"></label>
+      </div>
+      <div class="quick-sheet-actions">
+        <button id="testSheet" class="ghost" type="button" data-i18n="testSheet"></button>
+        <label class="check compact-check"><input id="autoIncrementInvoice" type="checkbox" checked><span data-i18n="autoIncrementInvoiceLabel"></span></label>
+      </div>
+      <details class="sheet-mapping-panel">
+        <summary><span data-i18n="sheetMappingTitle"></span><small data-i18n="sheetMappingHelp"></small></summary>
+        <div class="sheet-preset-row">
+          <button id="applyStandardSheetPreset" class="ghost" type="button" data-i18n="sheetPresetStandard"></button>
+          <button id="applyVietnamSheetPreset" class="ghost" type="button" data-i18n="sheetPresetVietnam"></button>
+        </div>
+        <div class="sheet-mapping-grid">
+          <label><span data-i18n="sheetColumnDate"></span><input id="sheetColDate" placeholder="B"></label>
+          <label><span data-i18n="sheetColumnCustomer"></span><input id="sheetColCustomerName" placeholder="C"></label>
+          <label><span data-i18n="sheetColumnReference"></span><input id="sheetColOrderNo" placeholder="D"></label>
+          <label><span data-i18n="sheetColumnProduct"></span><input id="sheetColProduct" placeholder="E"></label>
+          <label><span data-i18n="sheetColumnUsd"></span><input id="sheetColUsd" placeholder="F"></label>
+          <label><span data-i18n="sheetColumnProvider"></span><input id="sheetColProvider" placeholder="G"></label>
+          <label><span data-i18n="sheetColumnVnd"></span><input id="sheetColGrossVnd" placeholder="H"></label>
+          <label><span data-i18n="sheetColumnRate"></span><input id="sheetColRate" placeholder="I"></label>
+          <label><span data-i18n="sheetColumnInvoiceNo"></span><input id="sheetColInvoiceNo" placeholder="J"></label>
+          <label><span data-i18n="sheetColumnInvoiceDate"></span><input id="sheetColInvoiceDate" placeholder="K"></label>
+        </div>
+      </details>
+    </details>
+    <div id="sheetHealthCard" class="sheet-health-card"></div>
+    <button id="createDefaultSheet" class="ghost sheet-setup-button" type="button" data-i18n="createDefaultSheet"></button>
+    <div id="sheetSettingsSuggestion" class="smart-suggestion sheet-smart-suggestion" data-smart-tip="sheetSettings" hidden>
+      <div>
+        <strong data-i18n="sheetTipTitle"></strong>
+        <p data-i18n="sheetTipText"></p>
+      </div>
+      <div class="smart-suggestion-actions">
+        <button id="openSheetSettingsTip" class="ghost" type="button" data-i18n="openSheetSettings"></button>
+        <label class="dont-show-tip"><input id="dismissSheetTip" type="checkbox"><span data-i18n="dontShowTipAgain"></span></label>
+      </div>
+    </div>
+    <div id="sheetPreflightWarnings" class="sheet-preflight-warnings" hidden></div>
+    <div class="sheet-preview-panel">
+      <div class="sheet-preview-head">
+        <strong data-i18n="sheetPreviewTitle"></strong>
+        <small data-i18n="sheetPreviewHelp"></small>
+      </div>
+      <div id="sheetPreviewTable" class="sheet-preview-table"></div>
+    </div>
+    <button id="writeSheet" class="primary sheet-write-button sheet-primary-action" type="button" data-i18n="writeSheet"></button>
+    <details class="accounting-handoff">
+      <summary data-i18n="accountingHandoffTitle"></summary>
+      <p data-i18n="accountingHandoffHelp"></p>
+      <div class="accounting-draft-toolbar">
+        <label><span data-i18n="accountingPresetLabel"></span><select id="accountingPreset"><option value="invoice_standard" data-i18n="accountingPresetInvoice"></option><option value="custom_template" data-i18n="accountingPresetCustom"></option><option value="misa_basic" data-i18n="accountingPresetMisa"></option><option value="universal" data-i18n="accountingPresetUniversal"></option></select></label>
+        <span id="accountingDraftStatus" class="accounting-draft-status" data-i18n="accountingDraftReady"></span>
+      </div>
+      <div class="accounting-connector-card">
+        <label><span data-i18n="accountingConnectorLabel"></span><select id="accountingConnector"><option value="csv" data-i18n="accountingConnectorCsv"></option><option value="misa" data-i18n="accountingConnectorMisa"></option><option value="quickbooks" data-i18n="accountingConnectorQuickBooks"></option><option value="xero" data-i18n="accountingConnectorXero"></option><option value="generic" data-i18n="accountingConnectorGeneric"></option></select></label>
+        <label><span data-i18n="accountingConnectorUrlLabel"></span><input id="accountingConnectorUrl" data-placeholder-i18n="accountingConnectorUrlPlaceholder"></label>
+        <label class="accounting-connector-wide"><span data-i18n="accountingConnectorNotesLabel"></span><input id="accountingConnectorNotes" data-placeholder-i18n="typeHerePlaceholder"></label>
+        <button id="openAccountingConnector" class="ghost" type="button" data-i18n="openAccountingConnector"></button>
+        <small id="accountingConnectorStatus" class="accounting-connector-status"></small>
+      </div>
+      <small class="accounting-safe-note" data-i18n="accountingSafeNote"></small>
+      <details class="accounting-template-builder">
+        <summary data-i18n="accountingTemplateTitle"></summary>
+        <p data-i18n="accountingTemplateHelp"></p>
+        <textarea id="accountingTemplateText" spellcheck="false" data-placeholder-i18n="accountingTemplatePlaceholder"></textarea>
+        <div class="button-row ux-save-actions">
+          <button id="saveAccountingTemplate" class="ghost" type="button" data-i18n="saveAccountingTemplate"></button>
+          <button id="clearAccountingTemplate" class="ghost" type="button" data-i18n="clearAccountingTemplate"></button>
+        </div>
+      </details>
+      <div id="invoiceDraftPreview" class="invoice-draft-preview"></div>
+      <div class="button-row ux-save-actions">
+        <button id="copyInvoiceDraft" class="ghost" type="button" data-i18n="copyInvoiceDraft"></button>
+        <button id="copyAccountingRow" class="ghost" type="button" data-i18n="copyAccountingRow"></button>
+        <button id="copyAccountingGuide" class="ghost" type="button" data-i18n="copyAccountingGuide"></button>
+        <button id="exportAccountingSample" class="ghost" type="button" data-i18n="exportAccountingSample"></button>
+        <button id="exportMisaCsv" class="ghost" type="button" data-i18n="exportMisaCsv"></button>
+        <button id="exportAccountingCsv" class="ghost" type="button" data-i18n="exportAccountingCsv"></button>
+      </div>
+      <textarea id="accountingRowPreview" spellcheck="false" data-placeholder-i18n="accountingRowPlaceholder"></textarea>
+    </details>
+    <details class="sheet-secondary-tools">
+      <summary data-i18n="sheetSecondarySummary"></summary>
+      <textarea id="sheetRow" spellcheck="false" data-placeholder-i18n="sheetRowPlaceholder"></textarea>
+      <div class="button-row ux-save-actions">
+        <button id="copyRow" class="ghost" type="button" data-i18n="copy"></button>
+        <button id="copyAllRows" class="ghost" type="button" data-i18n="copyAll"></button>
+      </div>
+    </details>
+    <div id="sheetActionStatus" class="sheet-action-status" hidden></div>
+    <a id="sheetsApiSetupLink" class="sheets-api-setup" href="https://console.cloud.google.com/apis/library/sheets.googleapis.com?project=952210731591" target="_blank" rel="noopener noreferrer" hidden data-i18n="enableSheetsApiAdmin"></a>
+  </section>
+
+  </div>
+
+  <details class="section ux-accordion ux-system-status">
+    <summary><span data-i18n="emailBridgeTitle"></span></summary>
+    <input id="enableEmailBridge" type="checkbox" checked hidden>
+    <input id="bridgeUrl" type="hidden" value="">
+    <div class="button-row bridge-actions">
+      <button id="checkBridge" class="ghost" type="button" data-i18n="checkBridge"></button>
+      <button id="syncBridge" class="ghost sheet-write-button" type="button" data-i18n="syncEmailNow"></button>
+      <button id="importBridgePayment" class="ghost" type="button" data-i18n="importLatestPayment"></button>
+      <button id="viewBridgeRecords" class="ghost" type="button" data-i18n="viewLatestRecords"></button>
+      <button id="openBridgeSetup" class="ghost" type="button" data-i18n="openBridgeSetup"></button>
+    </div>
+    <textarea id="bridgeRecordsPreview" class="bridge-records-preview" spellcheck="false" hidden></textarea>
+  </details>
+
+  <details class="section manual-gmail-mode ux-accordion" hidden>
+    <summary><span data-i18n="manualGmailTitle"></span></summary>
+    <p data-i18n="manualGmailHelp"></p>
+    <div class="actions">
+      <button id="autoRun" class="primary" type="button" data-i18n="primaryAction"></button>
+      <button id="buildOnly" class="secondary" type="button" data-i18n="buildOnly"></button>
+      <button id="forceCopy" class="danger" type="button" hidden data-i18n="forceCopy"></button>
+    </div>
+  </details>
+
+  <section id="settingsPanel" class="section settings-panel settings-v33" hidden>
+    <div class="settings-shell">
+      <div class="settings-hero">
+        <div>
+          <span class="settings-eyebrow" data-i18n="settingsEyebrow"></span>
+          <h2 data-i18n="settingsTitle"></h2>
+          <p data-i18n="settingsSubtitle"></p>
+        </div>
+        <div class="button-row settings-title-actions">
+          <button id="connectGoogle" class="ghost connect-button" type="button" data-i18n="connectGoogle"></button>
+          <button id="saveSettings" class="primary settings-save-main" type="button" data-i18n="saveSettings"></button>
+        </div>
+      </div>
+
+      <div class="settings-quick-map" aria-label="Settings quick map">
+        <div class="settings-map-card"><span>1</span><strong data-i18n="setupCardGoogleTitle"></strong><small data-i18n="setupCardGoogleHelp"></small></div>
+        <div class="settings-map-card"><span>2</span><strong data-i18n="setupCardSheetTitle"></strong><small data-i18n="setupCardSheetHelp"></small></div>
+        <div class="settings-map-card"><span>3</span><strong data-i18n="setupCardRulesTitle"></strong><small data-i18n="setupCardRulesHelp"></small></div>
+      </div>
+
+      <details id="sheetSettingsGroup" class="settings-group settings-priority" open>
+        <summary><span class="setting-icon">▦</span><span data-i18n="sheetSettingsTitle"></span></summary>
+        <div class="drawer-body settings-card-body">
+          <p class="setting-help" data-i18n="googleSheetSetupHelp"></p>
+          <small id="sheetAccountHint"></small>
+          <div class="settings-field-card settings-mini-card">
+            <label><span data-i18n="targetGmailAccountLabel"></span><input id="targetGmailAccount" type="email" placeholder="name@example.com"></label>
+            <small data-i18n="targetGmailAccountHelp"></small>
+          </div>
+          <div class="settings-field-card settings-tip-card">
+            <strong data-i18n="sheetMovedTitle"></strong>
+            <small data-i18n="sheetMovedHelp"></small>
+          </div>
+          <div class="toggle-grid setting-toggle-grid">
+            <label class="check"><input id="autoWriteSheet" type="checkbox"><span data-i18n="autoWriteSheetLabel"></span></label>
+            <label class="check"><input id="appendAccounting" type="checkbox"><span data-i18n="appendAccountingLabel"></span></label>
+          </div>
+          <small id="googleStatus"></small>
+        </div>
+      </details>
+
+      <details id="rulesSettingsGroup" class="settings-group settings-priority">
+        <summary><span class="setting-icon">↔</span><span data-i18n="rulesTitle"></span></summary>
+        <div class="drawer-body rules-settings settings-card-body">
+          <p class="setting-help" data-i18n="ruleSettingsIntro"></p>
+
+          <div class="rule-mode-switch settings-field-card">
+            <label><span data-i18n="ruleModeLabel"></span><select id="ruleMode"><option value="default" data-i18n="ruleModeDefault"></option><option value="custom" data-i18n="ruleModeCustom"></option></select></label>
+            <small data-i18n="ruleModeHelp"></small>
+          </div>
+
+          <div id="providerRulesBlock" class="rule-block rule-block-primary">
+            <div class="rule-block-title"><div><strong data-i18n="providerRulesTitle"></strong><small data-i18n="providerRulesHelp"></small></div><button id="saveGatewayRules" class="ghost" type="button" data-i18n="saveGatewayRulesLabel"></button></div>
+            <div class="preset-actions">
+              <button id="applyRecommendedPresets" class="ghost" type="button" data-i18n="applyRecommendedPresets"></button>
+              <button id="resetPresetRules" class="ghost" type="button" data-i18n="resetGatewayRulesLabel"></button>
+            </div>
+            <div id="gatewayRulesList" class="gateway-rules-list clean-rule-list"></div>
+          </div>
+
+          <div id="productRulesBlock" class="rule-block product-manager-block">
+            <div class="rule-block-title"><div><strong data-i18n="productRulesTitle"></strong><small data-i18n="productRulesHelp"></small></div><button id="saveRules" class="ghost" type="button" data-i18n="saveRules"></button></div>
+            <div id="productRuleList" class="product-rule-list"></div>
+            <div class="product-rule-form">
+              <label><span data-i18n="productAmountLabel"></span><input id="productRuleAmount" type="number" min="0" step="0.01" data-placeholder-i18n="amountPlaceholder"></label>
+              <label><span data-i18n="productNameLabel"></span><input id="productRuleName" data-placeholder-i18n="typeHerePlaceholder"></label>
+              <button id="addProductRule" class="ghost" type="button" data-i18n="addProduct"></button>
+              <button id="undoProductRuleChange" class="ghost" type="button" data-i18n="undoProductChange"></button>
+            </div>
+            <div class="product-alias-box">
+              <div class="rule-block-title compact-rule-title">
+                <div><strong data-i18n="productAliasTitle"></strong><small data-i18n="productAliasHelp"></small></div>
+                <button id="applyRecurringAliasPreset" class="ghost" type="button" data-i18n="applyRecurringAliasPreset"></button>
+              </div>
+              <div id="productAliasList" class="product-alias-list"></div>
+              <div class="product-alias-form">
+                <label><span data-i18n="productAliasKeywordsLabel"></span><input id="productAliasKeywords" data-placeholder-i18n="keywordPlaceholder"></label>
+                <label><span data-i18n="productAliasNameLabel"></span><input id="productAliasName" data-placeholder-i18n="typeHerePlaceholder"></label>
+                <button id="addProductAlias" class="ghost" type="button" data-i18n="addProduct"></button>
+              </div>
+            </div>
+            <textarea id="rulesText" class="rules compact-rules hidden-technical-rules" spellcheck="false" data-placeholder-i18n="rulesPlaceholder" hidden></textarea>
+            <small data-i18n="rulesHelp"></small>
+          </div>
+
+          <div class="user-rule-note">
+            <strong data-i18n="simpleRuleNoteTitle"></strong>
+            <span data-i18n="simpleRuleNoteText"></span>
+          </div>
+
+          <details class="settings-nested custom-rule-builder">
+            <summary><span data-i18n="advancedCustomRuleTitle"></span><small data-i18n="advancedCustomRuleHelp"></small></summary>
+            <div class="drawer-body nested-body">
+              <div class="custom-rule-summary">
+                <strong data-i18n="customRuleTitle"></strong>
+                <p data-i18n="customRuleHelp"></p>
+              </div>
+              <div class="two-cols">
+                <label><span data-i18n="customGatewayNameLabel"></span><input id="customGatewayName" data-placeholder-i18n="typeHerePlaceholder"></label>
+                <label><span data-i18n="customEmailTypeLabel"></span><select id="customEmailType"></select></label>
+                <label><span data-i18n="customSenderDomainsLabel"></span><input id="customSenderDomains" data-placeholder-i18n="domainPlaceholder"></label>
+                <label><span data-i18n="customSearchKeywordsLabel"></span><input id="customSearchKeywords" data-placeholder-i18n="keywordPlaceholder"></label>
+                <label><span data-i18n="customIgnoreKeywordsLabel"></span><input id="customIgnoreKeywords" data-placeholder-i18n="keywordPlaceholder"></label>
+                <label><span data-i18n="customEmailTypeKeywordsLabel"></span><input id="customEmailTypeKeywords" data-placeholder-i18n="keywordPlaceholder"></label>
+              </div>
+              <details class="settings-nested regex-builder" hidden aria-hidden="true">
+                <summary><span data-i18n="regexFieldsTitle"></span><small data-i18n="regexFieldsHelp"></small></summary>
+                <div class="two-cols nested-body">
+                  <label><span>Amount regex</span><input id="customAmountRegex"></label>
+                  <label><span>Customer name regex</span><input id="customCustomerNameRegex"></label>
+                  <label><span>Customer email regex</span><input id="customCustomerEmailRegex"></label>
+                  <label><span>Order regex</span><input id="customOrderRegex"></label>
+                  <label><span>Transaction ID regex</span><input id="customTransactionRegex"></label>
+                  <label><span>Subscription/Profile regex</span><input id="customSubscriptionRegex"></label>
+                  <label><span>Date regex</span><input id="customDateRegex"></label>
+                  <label><span>Next payment date regex</span><input id="customNextPaymentDateRegex"></label>
+                </div>
+              </details>
+              <div class="two-cols compact-two-cols">
+                <label><span data-i18n="customRevenueImpactLabel"></span><select id="customRevenueImpact"><option value="positive" data-i18n="revenueImpactPositive"></option><option value="negative" data-i18n="revenueImpactNegative"></option><option value="none" data-i18n="revenueImpactNone"></option><option value="risk_negative" data-i18n="revenueImpactRiskNegative"></option></select></label>
+                <label class="revenue-write-toggle custom-write-toggle"><input id="customShouldWrite" type="checkbox"><span data-i18n="customShouldWriteLabel"></span></label>
+              </div>
+              <div class="button-row"><button id="addCustomRule" class="primary" type="button" data-i18n="addCustomRuleLabel"></button><button id="testCustomRule" class="ghost" type="button" data-i18n="testCustomRuleLabel"></button></div>
+              <label><span data-i18n="sampleEmailLabel"></span><textarea id="customRuleTestContent" class="rules"></textarea></label>
+              <pre id="customRuleTestResult" class="custom-rule-result"></pre>
+            </div>
+          </details>
+
+          <details class="settings-nested advanced-rule-json" hidden aria-hidden="true">
+            <summary><span data-i18n="advancedRuleJsonTitle"></span><small data-i18n="advancedRuleJsonHelp"></small></summary>
+            <div class="nested-body">
+              <label><span>Rules JSON</span><textarea id="gatewayRulesJson" class="rules" spellcheck="false"></textarea></label>
+              <div class="button-row gateway-rule-actions">
+                <button id="resetGatewayRules" class="ghost" type="button" data-i18n="resetGatewayRulesLabel"></button>
+                <button id="exportGatewayRules" class="ghost" type="button" data-i18n="exportGatewayRulesLabel"></button>
+                <button id="importGatewayRules" class="ghost" type="button" data-i18n="importGatewayRulesLabel"></button>
+              </div>
+              <div id="gatewayRuleWarnings" class="gateway-rule-warnings" hidden></div>
+            </div>
+          </details>
+
+          <details class="settings-nested legacy-source-rules" hidden aria-hidden="true">
+            <summary><span data-i18n="legacyRuleTitle"></span><small data-i18n="legacyRuleHelp"></small></summary>
+            <div class="nested-body">
+              <label><span data-i18n="sourceRulesLabel"></span><textarea id="sourceRulesText" class="rules" spellcheck="false" data-placeholder-i18n="sourceRulesPlaceholder"></textarea></label>
+              <small data-i18n="sourceRulesHelp"></small>
+            </div>
+          </details>
+        </div>
+      </details>
+
+      <details class="settings-group">
+        <summary><span class="setting-icon">💱</span><span data-i18n="rateSettingsTitle"></span></summary>
+        <div class="drawer-body settings-card-body">
+          <p class="setting-help" data-i18n="rateSettingsHelp"></p>
+          <label for="rate" data-i18n="rateLabel"></label>
+          <div class="inline-field"><input id="rate" type="number" value="26124" min="1"><button id="getRate" class="secondary" type="button" data-i18n="getRate"></button></div>
+          <small id="rateSource"></small>
+          <details id="accountingAdvanced" class="settings-nested accounting-advanced">
+            <summary><span data-i18n="accountingAdvancedTitle"></span><small data-i18n="accountingAdvancedHelp"></small></summary>
+            <div class="two-cols compact-two-cols nested-body">
+              <label><span data-i18n="vatLabel"></span><input id="vatPercent" type="number" value="0" min="0" step="0.01"></label>
+              <label><span data-i18n="paypalFeeLabel"></span><input id="paypalFeePercent" type="number" value="0" min="0" step="0.01"></label>
+            </div>
+          </details>
+        </div>
+      </details>
+
+      <details class="settings-group">
+        <summary><span class="setting-icon">✓</span><span data-i18n="behaviorSettingsTitle"></span></summary>
+        <div class="drawer-body settings-card-body">
+          <p class="setting-help" data-i18n="behaviorSettingsHelp"></p>
+          <div class="toggle-grid setting-toggle-grid">
+            <label class="check"><input id="autoCopy" type="checkbox" checked><span data-i18n="autoCopyLabel"></span></label>
+            <label class="check"><input id="strictValidation" type="checkbox" checked><span data-i18n="strictValidationLabel"></span></label>
+          </div>
+        </div>
+      </details>
+
+      <details class="settings-group">
+        <summary><span class="setting-icon">Aa</span><span data-i18n="appearanceTitle"></span></summary>
+        <div class="drawer-body settings-card-body">
+          <div class="section-title compact-title"><small data-i18n="appearanceHelp"></small><button id="resetAppearance" class="ghost" type="button" data-i18n="resetAppearance"></button></div>
+          <div class="two-cols compact-two-cols"><label><span data-i18n="fontFamilyLabel"></span><select id="fontFamily"></select></label><label><span data-i18n="fontSizeLabel"></span><input id="fontSize" type="number" min="12" max="18" step="1"></label></div>
+          <label><span data-i18n="primaryColorLabel"></span><input id="primaryColor" type="color"></label>
+          <input id="panelColor" type="hidden" value="#ffffff">
+        </div>
+      </details>
+
+      <details class="settings-group">
+        <summary><span class="setting-icon">◴</span><span data-i18n="historyTitle"></span></summary>
+        <div class="drawer-body settings-card-body"><div class="button-row history-actions"><button id="exportCsv" class="ghost" type="button">CSV</button><button id="clearHistory" class="ghost" type="button" data-i18n="clear"></button></div><div id="historyList" class="history-list"></div></div>
+      </details>
+      <details class="settings-group">
+        <summary><span class="setting-icon">↕</span><span data-i18n="backupSettingsTitle"></span></summary>
+        <div class="drawer-body settings-card-body">
+          <p class="setting-help" data-i18n="backupSettingsHelp"></p>
+          <div class="button-row history-actions">
+            <button id="exportSettings" class="ghost" type="button" data-i18n="exportSettings"></button>
+            <button id="importSettings" class="ghost" type="button" data-i18n="importSettings"></button>
+          </div>
+          <input id="importSettingsFile" type="file" accept="application/json" hidden>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <script src="paymentRules.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

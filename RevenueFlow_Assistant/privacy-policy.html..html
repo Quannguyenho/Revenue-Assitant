@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RevenueFlow Assistant Privacy Policy | Netbase JSC</title>
+  <meta name="description" content="Privacy Policy for RevenueFlow Assistant, a Chrome extension by Netbase JSC for reviewing payment emails and saving approved records to Google Sheets.">
+  <style>
+    :root{
+      --ink:#102033;
+      --muted:#607188;
+      --line:#d8e4ef;
+      --blue:#0f6fc6;
+      --green:#137a50;
+      --green-bg:#eaf8f1;
+      --bg:#f3f7fb;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 Inter,Segoe UI,Arial,sans-serif}
+    main{width:min(980px,calc(100% - 32px));margin:32px auto;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 50px rgba(16,32,51,.10);overflow:hidden}
+    header{padding:34px 38px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,#ffffff,#eef6ff)}
+    .eyebrow{margin:0 0 8px;color:var(--blue);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    h1{margin:0;font-size:34px;line-height:1.15;letter-spacing:-.02em}
+    .subtitle{margin:10px 0 0;color:var(--muted)}
+    section{padding:26px 38px;border-bottom:1px solid var(--line)}
+    section:last-child{border-bottom:0}
+    h2{margin:0 0 10px;font-size:22px;line-height:1.25}
+    h3{margin:18px 0 8px;font-size:17px}
+    p{margin:0 0 12px}
+    ul{margin:8px 0 0;padding-left:22px}
+    li+li{margin-top:8px}
+    .notice{display:flex;gap:14px;align-items:flex-start;background:var(--green-bg)}
+    .mark{display:grid;place-items:center;flex:0 0 40px;height:40px;border:3px solid var(--green);border-radius:50%;color:var(--green);font-weight:900}
+    .card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+    .card{padding:16px;border:1px solid var(--line);border-radius:12px;background:#f8fbfe}
+    .card strong{display:block;margin-bottom:6px}
+    a{color:var(--blue);font-weight:700}
+    footer{padding:26px 38px;background:#102033;color:#fff}
+    footer p{margin:0 0 6px}
+    footer a{color:#80c6ff}
+    @media(max-width:760px){
+      main{margin:16px auto}
+      header,section,footer{padding:22px}
+      h1{font-size:28px}
+      .card-grid{grid-template-columns:1fr}
+      .notice{display:block}
+      .mark{margin-bottom:12px}
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">Netbase JSC · RevenueFlow Assistant</p>
+      <h1>Privacy Policy</h1>
+      <p class="subtitle">Last updated: June 24, 2026</p>
+    </header>
+
+    <section class="notice">
+      <span class="mark" aria-hidden="true">✓</span>
+      <div>
+        <h2>Privacy-first payment workflow</h2>
+        <p>RevenueFlow Assistant is designed to help users review payment-related Gmail messages and save approved payment records to Google Sheets. It does not ask for or store Gmail passwords, and it does not send, delete, move, label, or modify Gmail messages.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>1. Overview</h2>
+      <p>RevenueFlow Assistant is a Chrome extension provided by Netbase JSC. It helps users locate payment-related messages in Gmail, review extracted payment records, detect possible duplicates, and write user-approved records to Google Sheets.</p>
+      <p>This Privacy Policy explains what Google user data and extension data RevenueFlow Assistant accesses, how that data is used, and what choices users have.</p>
+    </section>
+
+    <section>
+      <h2>2. Google user data we access</h2>
+      <p>RevenueFlow Assistant may access the following data only after the user grants permission through Google OAuth:</p>
+      <ul>
+        <li><strong>Gmail account information:</strong> Gmail account address and mailbox profile information, used to show which Gmail account is connected.</li>
+        <li><strong>Payment-related Gmail messages:</strong> email metadata and message content needed to identify and parse payment notifications, such as PayPal, Stripe, or other configured payment sources.</li>
+        <li><strong>Payment record details:</strong> customer name, customer email, payment amount, payment provider, order/reference number, transaction ID, profile/subscription ID, and related payment fields extracted from payment emails.</li>
+        <li><strong>Google Sheets data:</strong> spreadsheet identifiers, tab names, cell ranges, and row values required to create, test, and write reviewed payment records to a Google Sheet selected or created by the user.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>3. How we use Google user data</h2>
+      <p>Google user data is used only to provide the extension’s payment reconciliation workflow:</p>
+      <ul>
+        <li>Find payment-related messages in the authorized Gmail mailbox.</li>
+        <li>Extract payment fields for user review.</li>
+        <li>Detect possible duplicate transactions.</li>
+        <li>Show payment records inside the extension for user confirmation.</li>
+        <li>Create, test, or write approved rows to a Google Sheet controlled by the user.</li>
+      </ul>
+      <p>RevenueFlow Assistant does not use Google user data for advertising, analytics profiling, creditworthiness decisions, lending purposes, or unrelated product features.</p>
+    </section>
+
+    <section>
+      <h2>4. Gmail permissions and limitations</h2>
+      <p>RevenueFlow Assistant uses Gmail read-only access. The extension cannot send, delete, move, label, or mark Gmail messages as read through the Gmail API.</p>
+      <p>The extension does not request or store Gmail passwords. Google authentication and authorization are handled by Chrome and Google OAuth.</p>
+    </section>
+
+    <section>
+      <h2>5. Google Sheets access</h2>
+      <p>Google Sheets access is used to support the spreadsheet workflow selected by the user. This may include creating a private RevenueFlow spreadsheet in the connected Google account, checking spreadsheet access, confirming a tab/range, and writing user-approved payment rows.</p>
+      <p>RevenueFlow Assistant writes to Google Sheets only after a user action or a user-enabled workflow setting. The user remains responsible for reviewing payment records before saving them.</p>
+    </section>
+
+    <section>
+      <h2>6. Storage and retention</h2>
+      <ul>
+        <li>Email message content is processed in the extension to extract payment fields and is not stored as a complete email archive.</li>
+        <li>Extension settings, connected Gmail display information, product rules, and up to 50 recent parsed payment-history records may be stored in <code>chrome.storage.local</code> in the user’s Chrome profile.</li>
+        <li>Google OAuth access tokens are handled by Chrome Identity and are not written to RevenueFlow Assistant’s local storage.</li>
+        <li>Local extension history remains until the user clears it, removes the extension, or clears Chrome profile extension data.</li>
+        <li>Rows already written to Google Sheets remain in the user’s Google account and can be edited or deleted by the user in Google Sheets.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>7. Sharing and transfer</h2>
+      <p>RevenueFlow Assistant does not sell Google user data, payment records, Gmail content, or customer data.</p>
+      <p>RevenueFlow Assistant does not use Google user data for advertising and does not transfer Google user data to data brokers.</p>
+      <p>In this release, Gmail message content and parsed payment records are processed locally in the Chrome extension and are not transmitted to Netbase JSC servers. If cloud sync or server-side processing is introduced in the future, this policy will be updated and users will be asked to re-consent where required.</p>
+    </section>
+
+    <section>
+      <h2>8. Security</h2>
+      <ul>
+        <li>Gmail access uses a read-only OAuth scope.</li>
+        <li>Google API traffic uses HTTPS.</li>
+        <li>Remote executable code is not used; extension scripts are packaged with the extension.</li>
+        <li>Sheet writes may be blocked when required fields are missing or an unreviewed possible duplicate is detected.</li>
+        <li>Users can revoke Google access at any time from their Google Account security settings.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>9. Limited Use statement</h2>
+      <p>RevenueFlow Assistant’s use and transfer of information received from Google APIs will adhere to the Chrome Web Store User Data Policy, including the Limited Use requirements. RevenueFlow Assistant’s use and transfer of information received from Google APIs will also adhere to the Google API Services User Data Policy, including the Limited Use requirements.</p>
+    </section>
+
+    <section>
+      <h2>10. Your choices and deletion</h2>
+      <ul>
+        <li>Disconnect Gmail from RevenueFlow Assistant.</li>
+        <li>Revoke RevenueFlow Assistant’s access in Google Account security settings.</li>
+        <li>Clear local payment history inside the extension where available.</li>
+        <li>Uninstall the extension to remove extension-local data from that Chrome profile.</li>
+        <li>Edit or delete any rows already written to Google Sheets directly in Google Sheets.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>11. Children</h2>
+      <p>RevenueFlow Assistant is a business productivity tool and is not directed to children.</p>
+    </section>
+
+    <section>
+      <h2>12. Changes to this policy</h2>
+      <p>Material changes to data access, data use, cloud processing, or third-party sharing will be reflected in this policy. When required, users will be asked to provide renewed consent.</p>
+    </section>
+
+    <section>
+      <h2>13. Contact</h2>
+      <p>Privacy questions, support requests, and deletion requests can be sent to:</p>
+      <p><strong>Netbase JSC</strong><br>
+      Email: <a href="mailto:admin@netbasejsc.com">admin@netbasejsc.com</a><br>
+      Website: <a href="https://netbasejsc.com/" target="_blank" rel="noopener noreferrer">https://netbasejsc.com/</a></p>
+    </section>
+
+    <footer>
+      <p><strong>RevenueFlow Assistant is a product of Netbase JSC.</strong></p>
+      <p>Copyright © 2026 Netbase JSC. All rights reserved.</p>
+    </footer>
+  </main>
+</body>
+</html>
