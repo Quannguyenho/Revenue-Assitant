@@ -126,7 +126,8 @@ function setupPage() {
       <h2>Nâng cao</h2>
       <div class="grid">
         <label>Max messages
-          <input id="maxMessages" type="number" min="1" max="500">
+          <input id="maxMessages" type="number" min="0" max="5000">
+          <span class="hint">Nhap 0 de quet toan bo mailbox.</span>
         </label>
         <label class="full">Payment keywords
           <textarea id="paymentKeywords"></textarea>
@@ -204,7 +205,7 @@ function setupPage() {
     function fill(config) {
       $("sourceMode").value = config.sourceMode || "paypal";
       $("modeBadge").textContent = modeLabel($("sourceMode").value);
-      $("maxMessages").value = config.maxMessages || 80;
+      $("maxMessages").value = config.maxMessages ?? 0;
       $("paymentKeywords").value = config.paymentKeywords || "";
       $("ignoreKeywords").value = config.ignoreKeywords || "";
       $("imapHost").value = config.imap?.host || "";

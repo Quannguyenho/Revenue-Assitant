@@ -35,3 +35,21 @@ $39.99 USD`);
   assert.equal(record.product, "");
   assert.equal(record.needReview, true);
 });
+
+test("marks failed and outgoing PayPal notices as non-revenue", () => {
+  const failed = parsePaymentEmail(`Subject: We couldn't process your recurring payment
+From: service@intl.paypal.com
+
+We couldn't process your recurring payment.
+Amount paid each time
+$29.00 USD`);
+  assert.equal(failed.status, "Failed");
+  assert.equal(failed.shouldWriteToRevenueSheet, false);
+
+  const outgoing = parsePaymentEmail(`Subject: Receipt for Your Payment to CONTABO GmbH
+From: service@intl.paypal.com
+
+Receipt for your payment to CONTABO GmbH
+$9.99 USD`);
+  assert.equal(outgoing.shouldWriteToRevenueSheet, false);
+});

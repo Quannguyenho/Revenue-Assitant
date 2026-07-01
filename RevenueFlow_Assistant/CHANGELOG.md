@@ -1,4 +1,15 @@
 
+## v6.8.0 - Internal Payment Received Focus
+
+- Updated the package version to `6.8.0`.
+- Changed the internal default source mode to Local Sync/Roundcube instead of Cloud Sync.
+- Added full mailbox scan support with `MAX_MESSAGES=0`.
+- Filtered Local Sync results to received-payment records only: payment received, invoice paid, and recurring/subscription payments.
+- Skipped failed, suspended, dispute, refund, and outgoing payment receipt emails from the payment queue.
+- Added a Payment Inbox `Reference` column for transaction/order/profile/subscription/source IDs.
+- Tuned side-panel wording away from Gmail-first language for the internal mailbox workflow.
+- Added summary reporting for skipped non-payment emails.
+
 ## v6.7.0 - Roundcube Webmail Fallback
 
 - Updated the package version to `6.7.0`.

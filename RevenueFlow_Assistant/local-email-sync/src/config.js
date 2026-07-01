@@ -3,6 +3,8 @@ const path = require("path");
 
 const rootDir = path.resolve(__dirname, "..");
 const envPath = path.join(rootDir, ".env");
+const DEFAULT_PAYMENT_KEYWORDS = "payment received,you received a payment,amount received,invoice paid,paid your invoice,subscription payment received,recurring payment received";
+const DEFAULT_IGNORE_KEYWORDS = "security alert,login code,password reset,verification code,automatic payments from,suspended,couldn't process,could not process,receipt for your payment,you sent a payment";
 
 function parseEnvFile(filePath) {
   if (!fs.existsSync(filePath)) return {};
@@ -34,6 +36,14 @@ function oneOf(value, allowed, fallback) {
   return allowed.includes(normalized) ? normalized : fallback;
 }
 
+function maxMessages(value, fallback = 0) {
+  const raw = String(value ?? "").trim().toLowerCase();
+  if (!raw || raw === "all" || raw === "0") return 0;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(1, Math.min(5000, parsed));
+}
+
 function buildConfig() {
   const fileEnv = parseEnvFile(envPath);
   const env = { ...fileEnv, ...process.env };
@@ -50,9 +60,9 @@ function buildConfig() {
       password: env.IMAP_PASSWORD || "",
       mailbox: env.IMAP_MAILBOX || "INBOX"
     },
-    maxMessages: Math.max(1, Math.min(500, Number(env.MAX_MESSAGES || 80))),
-    paymentKeywords: csv(env.PAYMENT_KEYWORDS || "paypal,payment received,you received a payment,subscription payment,recurring payment,invoice paid,stripe"),
-    ignoreKeywords: csv(env.IGNORE_KEYWORDS || "security alert,login code,password reset,verification code"),
+    maxMessages: maxMessages(env.MAX_MESSAGES, 0),
+    paymentKeywords: csv(env.PAYMENT_KEYWORDS || DEFAULT_PAYMENT_KEYWORDS),
+    ignoreKeywords: csv(env.IGNORE_KEYWORDS || DEFAULT_IGNORE_KEYWORDS),
     paypal: {
       env: oneOf(env.PAYPAL_ENV, ["live", "sandbox"], "live"),
       clientId: env.PAYPAL_CLIENT_ID || "",
@@ -154,9 +164,9 @@ function saveLocalSetup(input = {}) {
   next.SOURCE_MODE = sourceMode;
   next.HOST = input.host || next.HOST || "127.0.0.1";
   next.PORT = String(Math.max(1, Math.min(65535, Number(input.port || next.PORT || 8787))));
-  next.MAX_MESSAGES = String(Math.max(1, Math.min(500, Number(input.maxMessages || next.MAX_MESSAGES || 80))));
-  next.PAYMENT_KEYWORDS = String(input.paymentKeywords || next.PAYMENT_KEYWORDS || "paypal,payment received,you received a payment,subscription payment,recurring payment,invoice paid,stripe");
-  next.IGNORE_KEYWORDS = String(input.ignoreKeywords || next.IGNORE_KEYWORDS || "security alert,login code,password reset,verification code");
+  next.MAX_MESSAGES = String(maxMessages(input.maxMessages ?? next.MAX_MESSAGES, 0));
+  next.PAYMENT_KEYWORDS = String(input.paymentKeywords || next.PAYMENT_KEYWORDS || DEFAULT_PAYMENT_KEYWORDS);
+  next.IGNORE_KEYWORDS = String(input.ignoreKeywords || next.IGNORE_KEYWORDS || DEFAULT_IGNORE_KEYWORDS);
 
   if (input.imap) {
     next.IMAP_HOST = String(input.imap.host || next.IMAP_HOST || "srv.cmsmart.net").trim();

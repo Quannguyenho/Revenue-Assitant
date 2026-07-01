@@ -142,7 +142,8 @@ async function fetchRecentEmails(config) {
     await client.login();
     await client.examine(config.imap.mailbox);
     const uids = await client.searchAll();
-    const recent = uids.slice(-config.maxMessages).reverse();
+    const limit = Number(config.maxMessages || 0);
+    const recent = (limit > 0 ? uids.slice(-limit) : uids).reverse();
     const messages = [];
     for (const uid of recent) {
       const body = await client.fetchBody(uid);

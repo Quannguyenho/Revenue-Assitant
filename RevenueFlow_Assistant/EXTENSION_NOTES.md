@@ -69,6 +69,15 @@ This file keeps useful product and implementation decisions in one place so futu
 
 ## Current Release Note
 
+### v6.8.0
+
+- Internal build now defaults to Local Sync/Roundcube instead of Cloud Sync so the team can scan the internal mailbox directly.
+- Local Sync treats `MAX_MESSAGES=0` as "scan the whole mailbox" and supports up to 5000 messages when a numeric limit is used.
+- Roundcube scans now return only received-payment records: payment received, invoice paid, and recurring/subscription payments. Failed, suspended, dispute, refund, and outgoing payment receipt emails are skipped.
+- Local Sync summary now reports skipped non-payment email count so users can see how many mailbox messages were ignored.
+- Payment Inbox now shows a `Reference` column using transaction ID, order number, profile ID, subscription ID, or source message ID.
+- Customer-facing side-panel wording has been tuned for internal mailbox/Local Sync use instead of Gmail-first language.
+
 ### v6.7.0
 
 - Added a Local Sync Roundcube Webmail fallback for cases where the mailbox opens in the browser but IMAP ports are blocked.

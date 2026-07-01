@@ -71,6 +71,16 @@ ROUNDCUBE_MAILBOX=INBOX
 
 The service logs in to Roundcube locally, reads message source through Roundcube, parses PayPal payment emails, and returns the same `/latest` record format as IMAP. It does not store the webmail password in the Chrome extension.
 
+For the internal payment-received workflow, use:
+
+```text
+MAX_MESSAGES=0
+PAYMENT_KEYWORDS=payment received,you received a payment,amount received,invoice paid,paid your invoice,subscription payment received,recurring payment received
+IGNORE_KEYWORDS=security alert,login code,password reset,verification code,automatic payments from,suspended,couldn't process,could not process,receipt for your payment,you sent a payment
+```
+
+`MAX_MESSAGES=0` scans the whole mailbox. Local Sync still skips failed, suspended, dispute, refund, and outgoing payment receipt emails from the payment queue.
+
 ## PayPal CSV fallback
 
 Use this when both live connection paths are blocked or not configured yet.

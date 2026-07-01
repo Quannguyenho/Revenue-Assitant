@@ -54,6 +54,10 @@ function keywordMatch(text) {
   return config.paymentKeywords.some((keyword) => value.includes(keyword.toLowerCase()));
 }
 
+function isInternalReceivedPayment(record) {
+  return record && record.shouldWriteToRevenueSheet === true && record.revenueImpact === "positive" && record.status === "Paid";
+}
+
 function annotateDuplicates(records) {
   const seen = new Set();
   return records.map((record) => {
@@ -120,6 +124,7 @@ async function syncMailbox() {
   for (const email of emails) {
     if (!keywordMatch(email.body)) continue;
     const parsed = parsePaymentEmail(email.body);
+    if (!isInternalReceivedPayment(parsed)) continue;
     matched.push({
       ...parsed,
       source: mode === "roundcube" ? "roundcubeWebmail" : parsed.source,
@@ -131,6 +136,7 @@ async function syncMailbox() {
   const records = annotateDuplicates(matched);
   const needReview = records.filter((record) => record.needReview).length;
   const duplicates = records.filter((record) => record.isDuplicate);
+  const skippedNonPayment = Math.max(0, emails.length - records.length);
   const payload = {
     ok: true,
     service: "RevenueFlow Local Email Sync",
@@ -142,6 +148,7 @@ async function syncMailbox() {
     records,
     duplicates,
     needReview,
+    skippedNonRevenue: skippedNonPayment,
     lastSyncAt: new Date().toISOString(),
     summary: {
       scannedCount: emails.length,
@@ -149,7 +156,8 @@ async function syncMailbox() {
       parsedCount: records.length,
       writableCount: records.length - needReview,
       skippedDuplicates: duplicates.length,
-      needReviewCount: needReview
+      needReviewCount: needReview,
+      skippedNonRevenue: skippedNonPayment
     }
   };
   writeJson(config.outputFile, payload);

@@ -42,6 +42,7 @@ function dateVN(text) {
 function paymentType(text) {
   if (/refund|refunded/i.test(text)) return "Refund";
   if (/dispute|chargeback/i.test(text)) return "Dispute";
+  if (/couldn'?t process|could not process|payment failed|payment declined|was unsuccessful|were suspended|automatic payments? from .+ suspended/i.test(text)) return "Payment failed";
   if (/subscription|recurring|profile id|billing agreement|amount paid each time/i.test(text)) return "Recurring / subscription";
   if (/invoice paid|paid your invoice/i.test(text)) return "Invoice paid";
   return "Payment received";
@@ -51,6 +52,13 @@ function provider(text, from) {
   if (/stripe/i.test(`${from}\n${text}`)) return "Stripe";
   if (/paypal/i.test(`${from}\n${text}`)) return "PayPal";
   return "Payment";
+}
+
+function isReceivedPayment(text, type) {
+  if (!["Payment received", "Recurring / subscription", "Invoice paid"].includes(type)) return false;
+  if (/receipt for your payment to|you sent a payment|you paid|payment to\s+[A-Z0-9]/i.test(text)) return false;
+  if (/couldn'?t process|could not process|payment failed|payment declined|was unsuccessful|were suspended|automatic payments? from .+ suspended/i.test(text)) return false;
+  return /you received a payment|amount received|payment received|paid your invoice|invoice paid|subscription payment received|recurring payment received|transaction id/i.test(text);
 }
 
 function parsePaymentEmail(raw) {
@@ -79,6 +87,8 @@ function parsePaymentEmail(raw) {
   const customerEmail = firstCustomerEmail(text);
   const customerName = find(text, [/Customer name\s*[:\n]?\s*([^\n]+)/i, /payment from\s+(.+?)\s+for\s+/i]);
   const type = paymentType(text);
+  const isReceived = isReceivedPayment(text, type);
+  const status = isReceived ? "Paid" : /refund/i.test(type) ? "Refund" : /failed/i.test(type) ? "Failed" : /dispute/i.test(type) ? "Dispute" : "Info";
   const payProvider = provider(text, from);
   const reviewReasons = [];
   if (!customerName) reviewReasons.push("Customer missing");
@@ -90,9 +100,9 @@ function parsePaymentEmail(raw) {
     provider: payProvider,
     emailType: type,
     type,
-    status: /refund/i.test(type) ? "Refund" : "Paid",
-    revenueImpact: /refund|dispute/i.test(type) ? "negative" : "positive",
-    shouldWriteToRevenueSheet: !/dispute/i.test(type),
+    status,
+    revenueImpact: isReceived ? "positive" : "none",
+    shouldWriteToRevenueSheet: isReceived,
     date: dateVN(text),
     customerName,
     customerEmail,

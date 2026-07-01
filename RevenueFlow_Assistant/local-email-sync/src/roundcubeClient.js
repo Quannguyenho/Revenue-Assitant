@@ -196,8 +196,8 @@ async function listRoundcubeMessages(config, session, requestToken) {
   const rows = [];
   let page = 1;
   let pageCount = 1;
-  const max = config.maxMessages || 80;
-  while (rows.length < max && page <= pageCount) {
+  const max = Number(config.maxMessages || 0);
+  while ((max <= 0 || rows.length < max) && page <= pageCount) {
     const url = new URL("./", session.baseUrl);
     url.searchParams.set("_task", "mail");
     url.searchParams.set("_action", "list");
@@ -212,7 +212,7 @@ async function listRoundcubeMessages(config, session, requestToken) {
     rows.push(...parseMessageRows(data.exec));
     page += 1;
   }
-  return rows.slice(0, max);
+  return max > 0 ? rows.slice(0, max) : rows;
 }
 
 async function fetchRoundcubeSource(config, session, uid) {

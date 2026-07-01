@@ -72,7 +72,7 @@ function serializePaymentSourceRules(rules) {
 }
 
 const defaultConfig = {
-  configVersion: "6.7.0",
+  configVersion: "6.8.0",
   rate: 26124,
   product: "",
   rulesText: defaultRules.map((r) => `${r.amount}=${r.name}`).join("\n"),
@@ -106,7 +106,7 @@ const defaultConfig = {
   bridgeUrl: "http://127.0.0.1:8787",
   cloudSyncUrl: "http://127.0.0.1:8790",
   cloudSyncToken: "test-token",
-  emailSourceMode: "cloud",
+  emailSourceMode: "localimap",
   fontFamily: "Inter",
   fontSize: 14,
   primaryColor: "#1267b1",
@@ -132,15 +132,15 @@ const labels = {
     googleSheetsApiDisabled: "Google Sheets API chưa được bật cho RevenueFlow. Quản trị viên Netbase cần bật API một lần; khách hàng không phải tự cấu hình.",
     googleSheetsScopeMissing: "RevenueFlow chưa được cấp quyền Google Sheets. Hãy bấm Save lại và chọn Cho phép quyền Google Sheets.",
     privacyNoticeTitle: "Quyền riêng tư:",
-    privacyNoticeText: "RevenueFlow chỉ đọc email liên quan đến thanh toán sau khi bạn cấp quyền. Không yêu cầu hoặc lưu mật khẩu Gmail.",
+    privacyNoticeText: "RevenueFlow chỉ đọc email payment từ nguồn bạn cho phép. Mật khẩu mailbox chỉ nằm trong Local Sync, không lưu trong extension.",
     privacyNoticeLink: "Xem chính sách",
-    appDesc: "Quét payment trong Gmail, kiểm tra nhanh, rồi lưu vào Google Sheet.",
+    appDesc: "Quét payment received trong mailbox nội bộ, kiểm tra nhanh, rồi lưu vào Google Sheet.",
     quickStartEyebrow: "Bảng điều khiển",
     quickStartTitle: "Quét payment mới",
-    quickStartHelp: "Bấm nút xanh. RevenueFlow sẽ tìm payment trong Gmail và đưa vào danh sách.",
-    gmailAccountLabel: "Tài khoản Gmail đang quét",
-    gmailAccountDisconnected: "Chưa kết nối Gmail",
-    connectGmailAccount: "Kết nối Gmail",
+    quickStartHelp: "Bấm nút xanh. RevenueFlow sẽ quét Roundcube/Local Sync và đưa payment nhận tiền vào danh sách.",
+    gmailAccountLabel: "Nguồn mailbox đang quét",
+    gmailAccountDisconnected: "Chưa kết nối nguồn",
+    connectGmailAccount: "Kiểm tra nguồn",
     changeGmailAccount: "Cách đổi tài khoản",
     accountSwitchHelp: "Chrome đang cấp quyền bằng tài khoản của hồ sơ hiện tại. Muốn dùng Gmail khác: chuyển sang hồ sơ Chrome của tài khoản đó, mở RevenueFlow, rồi bấm Kết nối Gmail.",
     disconnectGmailAccount: "Ngắt kết nối hiện tại",
@@ -148,7 +148,7 @@ const labels = {
     gmailAccountConnected: "Đã kết nối Gmail",
     gmailSourceHelp: "Nguồn: Gmail API của mailbox này, không phải email đang mở trong trình duyệt.",
     quickCardScanTitle: "Quét payment",
-    quickCardScanHelp: "Bấm nút xanh để lấy payment mới từ Gmail.",
+    quickCardScanHelp: "Bấm nút xanh để lấy payment received từ mailbox nội bộ.",
     quickCardReviewTitle: "Kiểm tra",
     quickCardReviewHelp: "Chọn payment và sửa thông tin còn thiếu.",
     quickCardSheetTitle: "Lưu Sheet",
@@ -157,15 +157,15 @@ const labels = {
     workflowTitle: "Làm theo thứ tự từ trên xuống dưới",
     workflowHelp: "Nút chính nằm ở bước 1. Các phần bên dưới chỉ dùng để kiểm tra và lưu dữ liệu.",
     stepSyncTitle: "Quét email",
-    stepSyncHelp: "Tự quét Gmail, không cần mở từng email.",
+    stepSyncHelp: "Tự quét mailbox, không cần mở từng email.",
     stepReviewTitle: "Kiểm tra dữ liệu",
     stepReviewHelp: "Bổ sung dữ liệu còn thiếu.",
     stepWriteTitle: "Ghi Sheet",
     stepWriteHelp: "Ghi dòng đã kiểm tra.",
-    advancedBridgeSummary: "Trạng thái Gmail Sync",
+    advancedBridgeSummary: "Trạng thái Local Sync",
     emailSyncTitle: "Bước 1: Lấy payment mới",
     emailSyncBadge: "Nút chính",
-    emailSyncHelp: "Bấm nút xanh. RevenueFlow sẽ quét Gmail, lấy payment mới và đưa vào danh sách bên dưới.",
+    emailSyncHelp: "Bấm nút xanh. RevenueFlow sẽ quét mailbox nội bộ, lấy payment received và đưa vào danh sách bên dưới.",
     paymentInboxTitle: "Payment tìm thấy",
     dashboardTitle: "Tóm tắt",
     dashboardHelp: "Doanh thu được khử trùng từ payment đã quét và lịch sử xử lý.",
@@ -183,12 +183,13 @@ const labels = {
     confirmDuplicate: "Đã kiểm tra, vẫn tiếp tục lưu",
     reviewSelectPayment: "Chọn một payment để bắt đầu kiểm tra.",
     paymentInboxHelp: "Chọn một dòng để kiểm tra và lưu.",
-    paymentInboxEmpty: "Chưa có payment nào. Bấm Bắt đầu xử lý payment để quét Gmail.",
+    paymentInboxEmpty: "Chưa có payment nào. Bấm Bắt đầu xử lý payment để quét mailbox.",
     inboxScanSummary: "Đã quét {scanned} email liên quan · tìm thấy {matched} payment",
     inboxSaved: "Đã ghi Sheet",
     inboxStatusColumn: "Trạng thái",
     inboxDateColumn: "Ngày",
     inboxCustomerColumn: "Khách hàng",
+    inboxReferenceColumn: "Reference",
     inboxAmountColumn: "USD",
     inboxTypeColumn: "Loại",
     inboxReady: "OK",
@@ -211,7 +212,7 @@ const labels = {
     queueNextSave: "Tiếp theo: lưu các thanh toán sẵn sàng vào Sheet.",
     queueNextReview: "Tiếp theo: chọn từng thanh toán cần kiểm tra.",
     queueNextDuplicate: "Tiếp theo: kiểm tra giao dịch trùng trước khi lưu.",
-    queueNextScan: "Tiếp theo: quét Gmail để tìm thanh toán mới.",
+    queueNextScan: "Tiếp theo: quét mailbox để tìm payment received mới.",
     queueNextDone: "Hoàn tất: các thanh toán tìm thấy đã được xử lý.",
     bulkSavedReadyDetailed: "Đã lưu {saved} thanh toán sẵn sàng vào Sheet. Bỏ qua {skipped} mục cần kiểm tra, trùng hoặc đã lưu.",
     setupGmailStep: "Kết nối nguồn",
@@ -220,13 +221,13 @@ const labels = {
     setupDone: "Đã xong",
     setupMissing: "Cần làm",
     guidedGmailTitle: "Bước 1: Kết nối nguồn payment",
-    guidedGmailHelp: "Kết nối Gmail, PayPal API hoặc mail host để RevenueFlow lấy payment. Ứng dụng không lưu mật khẩu trong extension.",
+    guidedGmailHelp: "Kết nối Local Sync/Roundcube để RevenueFlow lấy payment received. Ứng dụng không lưu mật khẩu mailbox trong extension.",
     guidedSheetTitle: "Bước 2: Chuẩn bị Google Sheet",
     guidedSheetHelp: "Tạo Sheet mới hoặc dán link Sheet bạn muốn lưu dữ liệu doanh thu.",
     guidedScanTitle: "Bước 3: Quét payment đầu tiên",
-    guidedScanHelp: "Bấm quét để tìm payment mới trong Gmail và đưa vào danh sách review.",
+    guidedScanHelp: "Bấm quét để tìm payment received trong mailbox và đưa vào danh sách review.",
     guidedReadyTitle: "Sẵn sàng xử lý payment",
-    guidedReadyHelp: "Gmail và Sheet đã sẵn sàng. Bấm nút xanh để quét payment mới.",
+    guidedReadyHelp: "Nguồn payment và Sheet đã sẵn sàng. Bấm nút xanh để quét payment mới.",
     guidedDismiss: "Đã hiểu",
     createDefaultSheet: "Tạo Sheet RevenueFlow",
     defaultSheetCreated: "Đã tạo Sheet RevenueFlow và thêm tiêu đề cột.",
@@ -456,7 +457,7 @@ const labels = {
     googleTokenExpired: "Phiên Google đã hết hạn. Hãy bấm Connect Google lại.",
     googleConnectTimeout: "Google chưa phản hồi. Hãy đóng cửa sổ đăng nhập còn mở, reload extension rồi thử lại.",
     googleApiTimeout: "Google Sheets phản hồi quá lâu. Kiểm tra mạng rồi thử lại.",
-    bridgeApiTimeout: "Gmail phản hồi quá lâu. Hãy thử lại sau.",
+    bridgeApiTimeout: "Local Sync phản hồi quá lâu. Hãy thử lại sau.",
     googleUnexpectedResponse: "Google Sheets chưa trả phản hồi hợp lệ. Hãy reload extension, liên kết Google lại rồi thử tiếp.",
     googlePermissionRetrying: "Đang xin lại quyền Google Sheets...",
     googleSheetPermissionFailed: "Google đang từ chối quyền Sheet.",
@@ -537,9 +538,9 @@ const labels = {
     productRulesLabel: "Sản phẩm theo số tiền",
     rulesHelp: "Tip: nhập số tiền USD nếu muốn RevenueFlow tự chọn sản phẩm theo amount. Có thể để trống USD nếu chỉ muốn thêm vào danh sách chọn.",
     emailBridgeTitle: "Trạng thái hệ thống",
-    enableEmailBridgeLabel: "Bật Gmail Sync",
+    enableEmailBridgeLabel: "Bật Local Sync",
     bridgeUrlLabel: "Local Email Sync",
-    bridgeStatusIdle: "Chưa kết nối Gmail",
+    bridgeStatusIdle: "Chưa kết nối nguồn",
     bridgeStatusReady: "Đã kết nối",
     bridgeStatusSyncing: "Đang đồng bộ",
     bridgeStatusImported: "Đã import",
@@ -578,7 +579,7 @@ const labels = {
     needsReview: "cần kiểm tra",
     ready: "Sẵn sàng. Bấm Bắt đầu xử lý payment để service tự quét mailbox và lấy payment mới nhất.",
     gmailReadFailed: "Không đọc được nội dung Gmail. Hãy reload tab Gmail rồi thử lại.",
-    sidePanelReady: "Sẵn sàng. Bấm Bắt đầu xử lý payment để quét Gmail.",
+    sidePanelReady: "Sẵn sàng. Bấm Bắt đầu xử lý payment để quét mailbox.",
     rateSourceEmpty: "Tỷ giá nhập tay. Có thể chỉnh trong Settings.",
     datePlaceholder: "07/06/2026",
     emailTypePlaceholder: "Payment received",
@@ -650,15 +651,15 @@ const labels = {
     googleSheetsApiDisabled: "Google Sheets API is not enabled for RevenueFlow. A Netbase administrator must enable it once; customers do not need to configure it.",
     googleSheetsScopeMissing: "RevenueFlow does not have Google Sheets permission. Click Save again and allow Google Sheets access.",
     privacyNoticeTitle: "Privacy:",
-    privacyNoticeText: "RevenueFlow reads payment-related email only after you authorize it. It never asks for or stores your Gmail password.",
+    privacyNoticeText: "RevenueFlow reads payment email only from the source you allow. Mailbox passwords stay in Local Sync, not in the extension.",
     privacyNoticeLink: "View policy",
-    appDesc: "Scan Gmail payments, review quickly, then save to Google Sheet.",
+    appDesc: "Scan received payments from the internal mailbox, review quickly, then save to Google Sheet.",
     quickStartEyebrow: "Dashboard",
     quickStartTitle: "Scan new payments",
     quickStartHelp: "Click the blue button. RevenueFlow finds payment emails and adds them to the list.",
-    gmailAccountLabel: "Gmail account being scanned",
-    gmailAccountDisconnected: "Gmail is not connected",
-    connectGmailAccount: "Connect Gmail",
+    gmailAccountLabel: "Mailbox source being scanned",
+    gmailAccountDisconnected: "Source is not connected",
+    connectGmailAccount: "Check source",
     changeGmailAccount: "How to change account",
     accountSwitchHelp: "Chrome authorizes the account of the current browser profile. To use another Gmail account, switch to its Chrome profile, open RevenueFlow, then connect Gmail.",
     disconnectGmailAccount: "Disconnect current account",
@@ -667,14 +668,14 @@ const labels = {
     gmailSourceHelp: "Source: this mailbox through Gmail API, not the email open in the browser.",
     workflowEyebrow: "Workflow",
     workflowTitle: "Work from top to bottom",
-    workflowHelp: "No need to open emails manually. Scan Gmail, pick a payment, review, then write.",
+    workflowHelp: "No need to open emails manually. Scan the mailbox, pick a received payment, review, then write.",
     stepSyncTitle: "Scan email",
-    stepSyncHelp: "Scan Gmail without opening emails manually.",
+    stepSyncHelp: "Scan the mailbox without opening emails manually.",
     stepReviewTitle: "Review data",
     stepReviewHelp: "Edit name, email, order, and amount if needed.",
     stepWriteTitle: "Write Sheet",
     stepWriteHelp: "Copy or write directly to Google Sheet.",
-    advancedBridgeSummary: "Gmail Sync status",
+    advancedBridgeSummary: "Local Sync status",
     emailSyncTitle: "Get new payments",
     emailSyncBadge: "Main action",
     emailSyncHelp: "Click the button below to scan new emails and import the latest payment into the review form.",
@@ -695,12 +696,13 @@ const labels = {
     confirmDuplicate: "Reviewed, continue saving",
     reviewSelectPayment: "Select a payment to start reviewing.",
     paymentInboxHelp: "Select one row to review and save.",
-    paymentInboxEmpty: "No payments yet. Start the payment workflow to scan Gmail.",
+    paymentInboxEmpty: "No payments yet. Start the payment workflow to scan the mailbox.",
     inboxScanSummary: "Scanned {scanned} related emails · found {matched} payments",
     inboxSaved: "Saved to Sheet",
     inboxStatusColumn: "Status",
     inboxDateColumn: "Date",
     inboxCustomerColumn: "Customer",
+    inboxReferenceColumn: "Reference",
     inboxAmountColumn: "USD",
     inboxTypeColumn: "Type",
     inboxReady: "OK",
@@ -723,7 +725,7 @@ const labels = {
     queueNextSave: "Next: save ready payments to Sheet.",
     queueNextReview: "Next: open each payment that needs review.",
     queueNextDuplicate: "Next: check duplicate transactions before saving.",
-    queueNextScan: "Next: scan Gmail for new payments.",
+    queueNextScan: "Next: scan the mailbox for received payments.",
     queueNextDone: "Done: detected payments have been handled.",
     bulkSavedReadyDetailed: "Saved {saved} ready payments to Sheet. Skipped {skipped} payments that need review, are duplicate, or are already saved.",
     setupGmailStep: "Connect source",
@@ -732,13 +734,13 @@ const labels = {
     setupDone: "Done",
     setupMissing: "Needs setup",
     guidedGmailTitle: "Step 1: Connect payment source",
-    guidedGmailHelp: "Connect Gmail, PayPal API, or a mail host so RevenueFlow can fetch payments. The extension never stores mailbox passwords.",
+    guidedGmailHelp: "Connect Local Sync/Roundcube so RevenueFlow can fetch received payments. The extension never stores mailbox passwords.",
     guidedSheetTitle: "Step 2: Prepare Google Sheet",
     guidedSheetHelp: "Create a new Sheet or paste the Sheet link where revenue records should be saved.",
     guidedScanTitle: "Step 3: Scan the first payment",
-    guidedScanHelp: "Scan Gmail to find payment emails and add them to the review list.",
+    guidedScanHelp: "Scan the mailbox to find received payment emails and add them to the review list.",
     guidedReadyTitle: "Ready to process payments",
-    guidedReadyHelp: "Gmail and Sheet are ready. Click the blue button to scan new payments.",
+    guidedReadyHelp: "Payment source and Sheet are ready. Click the blue button to scan new payments.",
     guidedDismiss: "Got it",
     createDefaultSheet: "Create RevenueFlow Sheet",
     defaultSheetCreated: "Created the RevenueFlow Sheet and added column headers.",
@@ -967,7 +969,7 @@ const labels = {
     googleTokenExpired: "The Google session expired. Click Connect Google again.",
     googleConnectTimeout: "Google did not respond. Close any open sign-in window, reload the extension, and try again.",
     googleApiTimeout: "Google Sheets took too long to respond. Check the connection and try again.",
-    bridgeApiTimeout: "Gmail Sync took too long to respond. Try again later.",
+    bridgeApiTimeout: "Local Sync took too long to respond. Try again later.",
     googleUnexpectedResponse: "Google Sheets returned an invalid response. Reload the extension, reconnect Google, and try again.",
     googlePermissionRetrying: "Requesting Google Sheets permission again...",
     googleSheetPermissionFailed: "Google is blocking Sheet access.",
@@ -1048,9 +1050,9 @@ const labels = {
     productRulesLabel: "Products by amount",
     rulesHelp: "Tip: enter a USD amount when you want RevenueFlow to auto-select a product by amount. Leave USD blank to add a selectable item only.",
     emailBridgeTitle: "System status",
-    enableEmailBridgeLabel: "Enable Gmail Sync",
+    enableEmailBridgeLabel: "Enable Local Sync",
     bridgeUrlLabel: "Local Email Sync",
-    bridgeStatusIdle: "Gmail not connected",
+    bridgeStatusIdle: "Source not connected",
     bridgeStatusReady: "Connected",
     bridgeStatusSyncing: "Syncing",
     bridgeStatusImported: "Imported",
@@ -1089,7 +1091,7 @@ const labels = {
     needsReview: "needs review",
     ready: "Ready. Start the payment workflow to let the service scan the mailbox and import the latest payment.",
     gmailReadFailed: "Could not read Gmail content. Reload the Gmail tab, then try again.",
-    sidePanelReady: "Ready. Start the payment workflow to scan Gmail.",
+    sidePanelReady: "Ready. Start the payment workflow to scan the mailbox.",
     rateSourceEmpty: "Manual rate. You can edit it in Settings.",
     datePlaceholder: "07/06/2026",
     emailTypePlaceholder: "Payment received",
@@ -1454,8 +1456,13 @@ function setStatus(message, type = "ready") {
   el.status.className = `status ${type}`;
 }
 
+function hasConnectedPaymentSource() {
+  if (isLocalEmailSyncMode() || isCloudSyncMode()) return Boolean(workflowContext.emailBridge && workflowContext.emailBridge.ok);
+  return Boolean(connectedGmail);
+}
+
 function renderSetupChecklist() {
-  const hasGmail = Boolean(connectedGmail);
+  const hasGmail = hasConnectedPaymentSource();
   const hasSheet = Boolean(spreadsheetIdFromUrl(el.sheetUrl && el.sheetUrl.value));
   const hasPayments = Boolean(records.length || bridgeQueueRecords.length);
   [
@@ -1474,7 +1481,7 @@ function renderSetupChecklist() {
 
 function renderGuidedSetup(state = {}) {
   if (!el.guidedSetupCard) return;
-  const hasGmail = state.hasGmail ?? Boolean(connectedGmail);
+  const hasGmail = state.hasGmail ?? hasConnectedPaymentSource();
   const hasSheet = state.hasSheet ?? Boolean(spreadsheetIdFromUrl(el.sheetUrl && el.sheetUrl.value));
   const hasPayments = state.hasPayments ?? Boolean(records.length || bridgeQueueRecords.length);
   let model;
@@ -2677,6 +2684,10 @@ function recordDisplayName(record = {}) {
   return record.customerName || record.customerEmail || record.orderNo || record.transactionId || "Payment";
 }
 
+function recordReference(record = {}) {
+  return record.transactionId || record.orderNo || record.profileId || record.subscriptionId || record.sourceMessageId || "";
+}
+
 function prettifyKey(value = "") {
   return String(value || "")
     .replace(/_/g, " ")
@@ -2926,6 +2937,14 @@ function updateSmartFilterCounts() {
 }
 
 function inboxScanSummary() {
+  const summary = workflowContext.emailBridge && workflowContext.emailBridge.summary;
+  if (summary && (summary.scannedCount || summary.matchedCount || summary.skippedNonRevenue)) {
+    const base = t("inboxScanSummary")
+      .replace("{scanned}", String(summary.scannedCount || 0))
+      .replace("{matched}", String(summary.matchedCount ?? bridgeQueueRecords.length));
+    const skipped = Number(summary.skippedNonRevenue || 0);
+    return skipped ? `${base} · ${config.language === "en" ? "Skipped non-revenue" : "Bỏ qua không phải payment"}: ${skipped}` : base;
+  }
   return t("inboxScanSummary")
     .replace("{scanned}", String(gmailScanStats.queried || 0))
     .replace("{matched}", String(bridgeQueueRecords.length));
@@ -2962,6 +2981,7 @@ function renderPaymentInbox(list = bridgeQueueRecords) {
     const statusClass = state;
     const customer = recordDisplayName(record);
     const email = record.customerEmail ? `<small>${escapeHtml(record.customerEmail)}</small>` : "";
+    const reference = recordReference(record);
     const amount = record.amountUsd || record.usd || "";
     const type = `${record.provider || t("unknownLabel")} · ${displayEmailType(record.emailType || record.paymentType || record.type || "unknown")} · ${record.shouldWriteToRevenueSheet === true ? t("willWriteSheet") : t("notRevenue")}`;
     return `
@@ -2969,6 +2989,7 @@ function renderPaymentInbox(list = bridgeQueueRecords) {
         <td><span class="inbox-status ${statusClass}">${escapeHtml(statusText)}</span></td>
         <td>${escapeHtml(record.date || "-")}</td>
         <td><strong>${escapeHtml(customer)}</strong>${email}</td>
+        <td><code>${escapeHtml(reference || "-")}</code></td>
         <td>${escapeHtml(amount ? `${amount}` : "-")}</td>
         <td>${escapeHtml(type)}</td>
       </tr>
@@ -5438,7 +5459,10 @@ function applyConfig(nextConfig) {
   config.cloudSyncUrl = incoming.cloudSyncUrl || defaultConfig.cloudSyncUrl;
   config.cloudSyncToken = incoming.cloudSyncToken || defaultConfig.cloudSyncToken;
   config.emailSourceMode = incoming.emailSourceMode || defaultConfig.emailSourceMode;
-  if (String(incoming.configVersion || "").localeCompare("6.6.0", undefined, { numeric: true }) < 0) {
+  if (String(incoming.configVersion || "").localeCompare("6.8.0", undefined, { numeric: true }) < 0) {
+    config.emailSourceMode = "localimap";
+    config.bridgeUrl = defaultConfig.bridgeUrl;
+  } else if (String(incoming.configVersion || "").localeCompare("6.6.0", undefined, { numeric: true }) < 0) {
     config.emailSourceMode = "cloud";
     config.cloudSyncUrl = defaultConfig.cloudSyncUrl;
     config.cloudSyncToken = defaultConfig.cloudSyncToken;
