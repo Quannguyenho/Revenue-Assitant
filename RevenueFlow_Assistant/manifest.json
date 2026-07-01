@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "RevenueFlow Assistant",
-  "version": "6.8.0",
+  "version": "6.9.0",
   "description": "Payment email review assistant that scans authorized Gmail messages and saves user-approved revenue records to Google Sheets.",
   "minimum_chrome_version": "114",
   "homepage_url": "https://netbasejsc.com/",
@@ -19,9 +19,7 @@
   ],
   "host_permissions": [
     "https://gmail.googleapis.com/*",
-    "https://sheets.googleapis.com/*",
-    "http://127.0.0.1:8787/*",
-    "http://127.0.0.1:8790/*"
+    "https://sheets.googleapis.com/*"
   ],
   "oauth2": {
     "client_id": "952210731591-48s06f9vogefl79ojppclet1pvm7ldca.apps.googleusercontent.com",

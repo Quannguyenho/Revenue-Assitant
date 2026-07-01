@@ -33,16 +33,16 @@ const GMAIL_SCAN_LIMIT = 100;
 const REVENUEFLOW_SHEET_HEADERS = ["Date", "Customer", "Reference", "Product / service", "USD", "Provider", "VND gross", "Rate", "Invoice no.", "Invoice date"];
 const SHEET_FIELD_KEYS = ["date", "customerName", "orderNo", "product", "usd", "provider", "grossVnd", "rate", "invoiceNo", "invoiceDate"];
 const DEFAULT_SHEET_FIELD_COLUMNS = {
-  date: "B",
-  customerName: "C",
-  orderNo: "D",
-  product: "E",
-  usd: "F",
-  provider: "G",
-  grossVnd: "H",
-  rate: "I",
-  invoiceNo: "J",
-  invoiceDate: "K"
+  date: "A",
+  customerName: "B",
+  orderNo: "C",
+  product: "D",
+  usd: "E",
+  provider: "F",
+  grossVnd: "G",
+  rate: "H",
+  invoiceNo: "I",
+  invoiceDate: "J"
 };
 const VI_ACCOUNTING_SHEET_FIELD_COLUMNS = { ...DEFAULT_SHEET_FIELD_COLUMNS };
 
@@ -58,7 +58,7 @@ const legacySampleProductNames = [
   "Enterprise / custom project"
 ];
 
-const INTERNAL_PRODUCT_PATTERN = /printcart|cmsmart|netbase|thương mại điện tử|thuong mai dien tu|quickstart|w2p|woocommerce plugin/i;
+const INTERNAL_PRODUCT_PATTERN = /legacy sample product/i;
 const REVIEW_PRODUCT_PATTERN = /^need review/i;
 
 const defaultPaymentSourceRules = [
@@ -72,7 +72,7 @@ function serializePaymentSourceRules(rules) {
 }
 
 const defaultConfig = {
-  configVersion: "6.8.0",
+  configVersion: "6.9.0",
   rate: 26124,
   product: "",
   rulesText: defaultRules.map((r) => `${r.amount}=${r.name}`).join("\n"),
@@ -85,7 +85,7 @@ const defaultConfig = {
   sheetUrl: "",
   targetGmailAccount: "",
   sheetName: "Payments",
-  sheetStartCell: "B9",
+  sheetStartCell: "A2",
   sheetDirection: "down",
   sheetFieldColumns: DEFAULT_SHEET_FIELD_COLUMNS,
   writeCustomFields: true,
@@ -102,11 +102,11 @@ const defaultConfig = {
   accountingConnectorNotes: "",
   autoIncrementInvoice: true,
   autoWriteSheet: false,
-  enableEmailBridge: true,
-  bridgeUrl: "http://127.0.0.1:8787",
-  cloudSyncUrl: "http://127.0.0.1:8790",
-  cloudSyncToken: "test-token",
-  emailSourceMode: "localimap",
+  enableEmailBridge: false,
+  bridgeUrl: "",
+  cloudSyncUrl: "",
+  cloudSyncToken: "",
+  emailSourceMode: "gmail",
   fontFamily: "Inter",
   fontSize: 14,
   primaryColor: "#1267b1",
@@ -132,23 +132,23 @@ const labels = {
     googleSheetsApiDisabled: "Google Sheets API chưa được bật cho RevenueFlow. Quản trị viên Netbase cần bật API một lần; khách hàng không phải tự cấu hình.",
     googleSheetsScopeMissing: "RevenueFlow chưa được cấp quyền Google Sheets. Hãy bấm Save lại và chọn Cho phép quyền Google Sheets.",
     privacyNoticeTitle: "Quyền riêng tư:",
-    privacyNoticeText: "RevenueFlow chỉ đọc email payment từ nguồn bạn cho phép. Mật khẩu mailbox chỉ nằm trong Local Sync, không lưu trong extension.",
+    privacyNoticeText: "RevenueFlow chỉ đọc email payment qua Gmail OAuth. Ứng dụng không yêu cầu hoặc lưu mật khẩu email.",
     privacyNoticeLink: "Xem chính sách",
-    appDesc: "Quét payment received trong mailbox nội bộ, kiểm tra nhanh, rồi lưu vào Google Sheet.",
+    appDesc: "Quét payment received trong Gmail, kiểm tra nhanh, rồi lưu vào Google Sheet.",
     quickStartEyebrow: "Bảng điều khiển",
     quickStartTitle: "Quét payment mới",
-    quickStartHelp: "Bấm nút xanh. RevenueFlow sẽ quét Roundcube/Local Sync và đưa payment nhận tiền vào danh sách.",
-    gmailAccountLabel: "Nguồn mailbox đang quét",
-    gmailAccountDisconnected: "Chưa kết nối nguồn",
-    connectGmailAccount: "Kiểm tra nguồn",
+    quickStartHelp: "Bấm nút xanh. RevenueFlow sẽ quét Gmail đã cấp quyền và đưa payment nhận tiền vào danh sách.",
+    gmailAccountLabel: "Gmail đang quét",
+    gmailAccountDisconnected: "Chưa kết nối Gmail",
+    connectGmailAccount: "Kết nối Gmail",
     changeGmailAccount: "Cách đổi tài khoản",
     accountSwitchHelp: "Chrome đang cấp quyền bằng tài khoản của hồ sơ hiện tại. Muốn dùng Gmail khác: chuyển sang hồ sơ Chrome của tài khoản đó, mở RevenueFlow, rồi bấm Kết nối Gmail.",
     disconnectGmailAccount: "Ngắt kết nối hiện tại",
     gmailDisconnected: "Đã ngắt kết nối Gmail. Hãy chuyển hồ sơ Chrome nếu muốn dùng tài khoản khác.",
     gmailAccountConnected: "Đã kết nối Gmail",
-    gmailSourceHelp: "Nguồn: Gmail API của mailbox này, không phải email đang mở trong trình duyệt.",
+    gmailSourceHelp: "Nguồn: Gmail API của tài khoản này, không phải email đang mở trong trình duyệt.",
     quickCardScanTitle: "Quét payment",
-    quickCardScanHelp: "Bấm nút xanh để lấy payment received từ mailbox nội bộ.",
+    quickCardScanHelp: "Bấm nút xanh để lấy payment received từ Gmail đã cấp quyền.",
     quickCardReviewTitle: "Kiểm tra",
     quickCardReviewHelp: "Chọn payment và sửa thông tin còn thiếu.",
     quickCardSheetTitle: "Lưu Sheet",
@@ -157,15 +157,15 @@ const labels = {
     workflowTitle: "Làm theo thứ tự từ trên xuống dưới",
     workflowHelp: "Nút chính nằm ở bước 1. Các phần bên dưới chỉ dùng để kiểm tra và lưu dữ liệu.",
     stepSyncTitle: "Quét email",
-    stepSyncHelp: "Tự quét mailbox, không cần mở từng email.",
+    stepSyncHelp: "Tự quét Gmail, không cần mở từng email.",
     stepReviewTitle: "Kiểm tra dữ liệu",
     stepReviewHelp: "Bổ sung dữ liệu còn thiếu.",
     stepWriteTitle: "Ghi Sheet",
     stepWriteHelp: "Ghi dòng đã kiểm tra.",
-    advancedBridgeSummary: "Trạng thái Local Sync",
+    advancedBridgeSummary: "Trạng thái Gmail",
     emailSyncTitle: "Bước 1: Lấy payment mới",
     emailSyncBadge: "Nút chính",
-    emailSyncHelp: "Bấm nút xanh. RevenueFlow sẽ quét mailbox nội bộ, lấy payment received và đưa vào danh sách bên dưới.",
+    emailSyncHelp: "Bấm nút xanh. RevenueFlow sẽ quét Gmail, lấy payment received và đưa vào danh sách bên dưới.",
     paymentInboxTitle: "Payment tìm thấy",
     dashboardTitle: "Tóm tắt",
     dashboardHelp: "Doanh thu được khử trùng từ payment đã quét và lịch sử xử lý.",
@@ -183,7 +183,7 @@ const labels = {
     confirmDuplicate: "Đã kiểm tra, vẫn tiếp tục lưu",
     reviewSelectPayment: "Chọn một payment để bắt đầu kiểm tra.",
     paymentInboxHelp: "Chọn một dòng để kiểm tra và lưu.",
-    paymentInboxEmpty: "Chưa có payment nào. Bấm Bắt đầu xử lý payment để quét mailbox.",
+    paymentInboxEmpty: "Chưa có payment nào. Bấm Bắt đầu xử lý payment để quét Gmail.",
     inboxScanSummary: "Đã quét {scanned} email liên quan · tìm thấy {matched} payment",
     inboxSaved: "Đã ghi Sheet",
     inboxStatusColumn: "Trạng thái",
@@ -212,26 +212,26 @@ const labels = {
     queueNextSave: "Tiếp theo: lưu các thanh toán sẵn sàng vào Sheet.",
     queueNextReview: "Tiếp theo: chọn từng thanh toán cần kiểm tra.",
     queueNextDuplicate: "Tiếp theo: kiểm tra giao dịch trùng trước khi lưu.",
-    queueNextScan: "Tiếp theo: quét mailbox để tìm payment received mới.",
+    queueNextScan: "Tiếp theo: quét Gmail để tìm payment received mới.",
     queueNextDone: "Hoàn tất: các thanh toán tìm thấy đã được xử lý.",
     bulkSavedReadyDetailed: "Đã lưu {saved} thanh toán sẵn sàng vào Sheet. Bỏ qua {skipped} mục cần kiểm tra, trùng hoặc đã lưu.",
-    setupGmailStep: "Kết nối nguồn",
+    setupGmailStep: "Kết nối Gmail",
     setupSheetStep: "Chuẩn bị Google Sheet",
     setupScanStep: "Quét payment",
     setupDone: "Đã xong",
     setupMissing: "Cần làm",
-    guidedGmailTitle: "Bước 1: Kết nối nguồn payment",
-    guidedGmailHelp: "Kết nối Local Sync/Roundcube để RevenueFlow lấy payment received. Ứng dụng không lưu mật khẩu mailbox trong extension.",
+    guidedGmailTitle: "Bước 1: Kết nối Gmail",
+    guidedGmailHelp: "Kết nối Gmail bằng Google OAuth để RevenueFlow lấy payment received. Ứng dụng không lưu mật khẩu Gmail.",
     guidedSheetTitle: "Bước 2: Chuẩn bị Google Sheet",
     guidedSheetHelp: "Tạo Sheet mới hoặc dán link Sheet bạn muốn lưu dữ liệu doanh thu.",
     guidedScanTitle: "Bước 3: Quét payment đầu tiên",
-    guidedScanHelp: "Bấm quét để tìm payment received trong mailbox và đưa vào danh sách review.",
+    guidedScanHelp: "Bấm quét để tìm payment received trong Gmail và đưa vào danh sách review.",
     guidedReadyTitle: "Sẵn sàng xử lý payment",
     guidedReadyHelp: "Nguồn payment và Sheet đã sẵn sàng. Bấm nút xanh để quét payment mới.",
     guidedDismiss: "Đã hiểu",
     createDefaultSheet: "Tạo Sheet RevenueFlow",
     defaultSheetCreated: "Đã tạo Sheet RevenueFlow và thêm tiêu đề cột.",
-    quickFixConnectGmail: "Kiểm tra nguồn",
+    quickFixConnectGmail: "Kết nối Gmail",
     quickFixCreateSheet: "Tạo Sheet mới",
     quickFixOpenSettings: "Mở cài đặt Sheet",
     quickFixTryAgain: "Thử lại",
@@ -420,8 +420,8 @@ const labels = {
     invoiceNoLabel: "Số hóa đơn",
     invoiceDateLabel: "Ngày xuất HĐ",
     sheetUrlLabel: "Link Google Sheet",
-    targetGmailAccountLabel: "Giới hạn mailbox (không bắt buộc)",
-    targetGmailAccountHelp: "Để trống để đăng nhập Gmail bất kỳ. Chỉ nhập email nếu muốn khóa RevenueFlow vào đúng mailbox đó.",
+    targetGmailAccountLabel: "Giới hạn Gmail (không bắt buộc)",
+    targetGmailAccountHelp: "Để trống để đăng nhập Gmail bất kỳ. Chỉ nhập email nếu muốn khóa RevenueFlow vào đúng tài khoản đó.",
     sheetHelp: "Bấm nút xanh để lưu dữ liệu vào đúng Google Sheet. Sau khi lưu, RevenueFlow sẽ hiện đúng tab và ô đã ghi.",
     sheetAccountUsing: "Sheet sẽ được truy cập bằng tài khoản:",
     sheetAccountMissing: "Hãy kết nối Gmail trước để xác định tài khoản truy cập Sheet.",
@@ -457,7 +457,7 @@ const labels = {
     googleTokenExpired: "Phiên Google đã hết hạn. Hãy bấm Connect Google lại.",
     googleConnectTimeout: "Google chưa phản hồi. Hãy đóng cửa sổ đăng nhập còn mở, reload extension rồi thử lại.",
     googleApiTimeout: "Google Sheets phản hồi quá lâu. Kiểm tra mạng rồi thử lại.",
-    bridgeApiTimeout: "Local Sync phản hồi quá lâu. Hãy thử lại sau.",
+    bridgeApiTimeout: "Gmail phản hồi quá lâu. Hãy thử lại sau.",
     googleUnexpectedResponse: "Google Sheets chưa trả phản hồi hợp lệ. Hãy reload extension, liên kết Google lại rồi thử tiếp.",
     googlePermissionRetrying: "Đang xin lại quyền Google Sheets...",
     googleSheetPermissionFailed: "Google đang từ chối quyền Sheet.",
@@ -469,7 +469,7 @@ const labels = {
     googleWriteNotConfirmed: "Google chưa xác nhận kết quả ghi. Hãy mở Sheet kiểm tra dòng mới trước khi bấm Ghi lại.",
     googleBusy: "Google đang xử lý yêu cầu trước đó.",
     sheetTabMissing: "Không tìm thấy tab Sheet đã nhập.",
-    invalidStartCell: "Ô bắt đầu chưa đúng. Ví dụ hợp lệ: B9.",
+    invalidStartCell: "Ô bắt đầu chưa đúng. Ví dụ hợp lệ: A2.",
     copyAndWriteSuccess: "Đã copy và ghi vào Google Sheet.",
     copyAllAndWriteSuccess: "Đã copy và ghi tất cả vào Google Sheet.",
     autoCopyOff: "Đã tạo dòng. Tự copy đang tắt trong cấu hình.",
@@ -537,15 +537,15 @@ const labels = {
     sourceRulesPlaceholder: "Stripe|stripe.com|payment succeeded,invoice paid",
     productRulesLabel: "Sản phẩm theo số tiền",
     rulesHelp: "Tip: nhập số tiền USD nếu muốn RevenueFlow tự chọn sản phẩm theo amount. Có thể để trống USD nếu chỉ muốn thêm vào danh sách chọn.",
-    emailBridgeTitle: "Trạng thái hệ thống",
-    enableEmailBridgeLabel: "Bật Local Sync",
-    bridgeUrlLabel: "Local Email Sync",
+    emailBridgeTitle: "Trạng thái Gmail",
+    enableEmailBridgeLabel: "Bật quét Gmail",
+    bridgeUrlLabel: "Nguồn Gmail",
     bridgeStatusIdle: "Chưa kết nối nguồn",
     bridgeStatusReady: "Đã kết nối",
     bridgeStatusSyncing: "Đang đồng bộ",
     bridgeStatusImported: "Đã import",
-    bridgeStatusDisabled: "Bridge đang tắt",
-    bridgeStatusError: "Cần kiểm tra mail host",
+    bridgeStatusDisabled: "Chưa bật quét",
+    bridgeStatusError: "Cần kiểm tra Gmail",
     bridgeStatusReview: "Cần kiểm tra",
     bridgeStatusBlocked: "Bị chặn",
     bridgeServiceStateLabel: "Trạng thái",
@@ -555,15 +555,15 @@ const labels = {
     bridgeMatchedLabel: "Khớp",
     bridgeNeedReviewLabel: "Cần kiểm tra",
     bridgeDuplicateLabel: "Trùng",
-    checkBridge: "Kiểm tra mail host",
+    checkBridge: "Kiểm tra Gmail",
     syncEmailNow: "Quét email payment",
     importLatestPayment: "Dùng payment mới nhất",
     viewLatestRecords: "Xem payment",
-    openBridgeSetup: "Thiết lập nguồn",
-    bridgeCheckSuccess: "Email Sync đã sẵn sàng.",
-    bridgeCheckFailed: "Chưa kết nối được Local Sync. Hãy mở START_RevenueFlow_Local_Email_Sync.cmd hoặc Thiết lập nguồn rồi thử lại.",
+    openBridgeSetup: "Kết nối Gmail",
+    bridgeCheckSuccess: "Gmail đã sẵn sàng.",
+    bridgeCheckFailed: "Chưa kết nối được Gmail. Hãy bấm Kết nối Gmail rồi thử lại.",
     bridgeSyncSuccess: "Đã quét email payment.",
-    bridgeLatestEmpty: "Chưa tìm thấy payment phù hợp trong mailbox.",
+    bridgeLatestEmpty: "Chưa tìm thấy payment phù hợp trong Gmail.",
     bridgeImportSuccess: "Đã đưa payment mới nhất vào form kiểm tra.",
     sheetRowTitle: "Lưu vào Sheet",
     copy: "Sao chép",
@@ -577,9 +577,9 @@ const labels = {
     noHistory: "Chưa có lịch sử.",
     reliable: "chắc chắn",
     needsReview: "cần kiểm tra",
-    ready: "Sẵn sàng. Bấm Bắt đầu xử lý payment để service tự quét mailbox và lấy payment mới nhất.",
+    ready: "Sẵn sàng. Bấm Bắt đầu xử lý payment để quét Gmail và lấy payment mới nhất.",
     gmailReadFailed: "Không đọc được nội dung Gmail. Hãy reload tab Gmail rồi thử lại.",
-    sidePanelReady: "Sẵn sàng. Bấm Bắt đầu xử lý payment để quét mailbox.",
+    sidePanelReady: "Sẵn sàng. Bấm Bắt đầu xử lý payment để quét Gmail.",
     rateSourceEmpty: "Tỷ giá nhập tay. Có thể chỉnh trong Settings.",
     datePlaceholder: "07/06/2026",
     emailTypePlaceholder: "Payment received",
@@ -651,31 +651,31 @@ const labels = {
     googleSheetsApiDisabled: "Google Sheets API is not enabled for RevenueFlow. A Netbase administrator must enable it once; customers do not need to configure it.",
     googleSheetsScopeMissing: "RevenueFlow does not have Google Sheets permission. Click Save again and allow Google Sheets access.",
     privacyNoticeTitle: "Privacy:",
-    privacyNoticeText: "RevenueFlow reads payment email only from the source you allow. Mailbox passwords stay in Local Sync, not in the extension.",
+    privacyNoticeText: "RevenueFlow reads payment emails through Google OAuth. It never asks for or stores email passwords.",
     privacyNoticeLink: "View policy",
-    appDesc: "Scan received payments from the internal mailbox, review quickly, then save to Google Sheet.",
+    appDesc: "Scan received payments from Gmail, review quickly, then save to Google Sheet.",
     quickStartEyebrow: "Dashboard",
     quickStartTitle: "Scan new payments",
     quickStartHelp: "Click the blue button. RevenueFlow finds payment emails and adds them to the list.",
     gmailAccountLabel: "Mailbox source being scanned",
     gmailAccountDisconnected: "Source is not connected",
-    connectGmailAccount: "Check source",
+    connectGmailAccount: "Connect Gmail",
     changeGmailAccount: "How to change account",
     accountSwitchHelp: "Chrome authorizes the account of the current browser profile. To use another Gmail account, switch to its Chrome profile, open RevenueFlow, then connect Gmail.",
     disconnectGmailAccount: "Disconnect current account",
     gmailDisconnected: "Gmail disconnected. Switch Chrome profiles to use another account.",
     gmailAccountConnected: "Gmail connected",
-    gmailSourceHelp: "Source: this mailbox through Gmail API, not the email open in the browser.",
+    gmailSourceHelp: "Source: this Gmail account through the Gmail API, not the email open in the browser.",
     workflowEyebrow: "Workflow",
     workflowTitle: "Work from top to bottom",
-    workflowHelp: "No need to open emails manually. Scan the mailbox, pick a received payment, review, then write.",
+    workflowHelp: "No need to open emails manually. Scan Gmail, pick a received payment, review, then write.",
     stepSyncTitle: "Scan email",
-    stepSyncHelp: "Scan the mailbox without opening emails manually.",
+    stepSyncHelp: "Scan Gmail without opening emails manually.",
     stepReviewTitle: "Review data",
     stepReviewHelp: "Edit name, email, order, and amount if needed.",
     stepWriteTitle: "Write Sheet",
     stepWriteHelp: "Copy or write directly to Google Sheet.",
-    advancedBridgeSummary: "Local Sync status",
+    advancedBridgeSummary: "Gmail status",
     emailSyncTitle: "Get new payments",
     emailSyncBadge: "Main action",
     emailSyncHelp: "Click the button below to scan new emails and import the latest payment into the review form.",
@@ -696,7 +696,7 @@ const labels = {
     confirmDuplicate: "Reviewed, continue saving",
     reviewSelectPayment: "Select a payment to start reviewing.",
     paymentInboxHelp: "Select one row to review and save.",
-    paymentInboxEmpty: "No payments yet. Start the payment workflow to scan the mailbox.",
+    paymentInboxEmpty: "No payments yet. Start the payment workflow to scan Gmail.",
     inboxScanSummary: "Scanned {scanned} related emails · found {matched} payments",
     inboxSaved: "Saved to Sheet",
     inboxStatusColumn: "Status",
@@ -725,7 +725,7 @@ const labels = {
     queueNextSave: "Next: save ready payments to Sheet.",
     queueNextReview: "Next: open each payment that needs review.",
     queueNextDuplicate: "Next: check duplicate transactions before saving.",
-    queueNextScan: "Next: scan the mailbox for received payments.",
+    queueNextScan: "Next: scan Gmail for received payments.",
     queueNextDone: "Done: detected payments have been handled.",
     bulkSavedReadyDetailed: "Saved {saved} ready payments to Sheet. Skipped {skipped} payments that need review, are duplicate, or are already saved.",
     setupGmailStep: "Connect source",
@@ -734,17 +734,17 @@ const labels = {
     setupDone: "Done",
     setupMissing: "Needs setup",
     guidedGmailTitle: "Step 1: Connect payment source",
-    guidedGmailHelp: "Connect Local Sync/Roundcube so RevenueFlow can fetch received payments. The extension never stores mailbox passwords.",
+    guidedGmailHelp: "Connect Gmail with Google OAuth so RevenueFlow can fetch received payments. The extension never stores Gmail passwords.",
     guidedSheetTitle: "Step 2: Prepare Google Sheet",
     guidedSheetHelp: "Create a new Sheet or paste the Sheet link where revenue records should be saved.",
     guidedScanTitle: "Step 3: Scan the first payment",
-    guidedScanHelp: "Scan the mailbox to find received payment emails and add them to the review list.",
+    guidedScanHelp: "Scan Gmail to find received payment emails and add them to the review list.",
     guidedReadyTitle: "Ready to process payments",
     guidedReadyHelp: "Payment source and Sheet are ready. Click the blue button to scan new payments.",
     guidedDismiss: "Got it",
     createDefaultSheet: "Create RevenueFlow Sheet",
     defaultSheetCreated: "Created the RevenueFlow Sheet and added column headers.",
-    quickFixConnectGmail: "Check source",
+    quickFixConnectGmail: "Connect Gmail",
     quickFixCreateSheet: "Create new Sheet",
     quickFixOpenSettings: "Open Sheet settings",
     quickFixTryAgain: "Try again",
@@ -932,7 +932,7 @@ const labels = {
     invoiceNoLabel: "Invoice no.",
     invoiceDateLabel: "Invoice date",
     sheetUrlLabel: "Google Sheet link",
-    targetGmailAccountLabel: "Restrict mailbox (optional)",
+    targetGmailAccountLabel: "Restrict Gmail account (optional)",
     targetGmailAccountHelp: "Leave blank to connect any Gmail account. Enter an address only to prevent accidental account selection.",
     sheetHelp: "Click the blue button to save data to the correct Google Sheet. After saving, RevenueFlow shows the exact tab and range.",
     sheetAccountUsing: "The Sheet will be accessed using:",
@@ -969,7 +969,7 @@ const labels = {
     googleTokenExpired: "The Google session expired. Click Connect Google again.",
     googleConnectTimeout: "Google did not respond. Close any open sign-in window, reload the extension, and try again.",
     googleApiTimeout: "Google Sheets took too long to respond. Check the connection and try again.",
-    bridgeApiTimeout: "Local Sync took too long to respond. Try again later.",
+    bridgeApiTimeout: "Gmail took too long to respond. Try again later.",
     googleUnexpectedResponse: "Google Sheets returned an invalid response. Reload the extension, reconnect Google, and try again.",
     googlePermissionRetrying: "Requesting Google Sheets permission again...",
     googleSheetPermissionFailed: "Google is blocking Sheet access.",
@@ -981,7 +981,7 @@ const labels = {
     googleWriteNotConfirmed: "Google did not confirm the write. Open the Sheet and check the new row before writing again.",
     googleBusy: "Google is still processing the previous request.",
     sheetTabMissing: "The Sheet tab was not found.",
-    invalidStartCell: "The start cell is invalid. Example: B9.",
+    invalidStartCell: "The start cell is invalid. Example: A2.",
     copyAndWriteSuccess: "Copied and wrote to Google Sheet.",
     copyAllAndWriteSuccess: "Copied and wrote all rows to Google Sheet.",
     autoCopyOff: "Row built. Auto-copy is turned off in settings.",
@@ -1049,15 +1049,15 @@ const labels = {
     sourceRulesPlaceholder: "Stripe|stripe.com|payment succeeded,invoice paid",
     productRulesLabel: "Products by amount",
     rulesHelp: "Tip: enter a USD amount when you want RevenueFlow to auto-select a product by amount. Leave USD blank to add a selectable item only.",
-    emailBridgeTitle: "System status",
-    enableEmailBridgeLabel: "Enable Local Sync",
-    bridgeUrlLabel: "Local Email Sync",
+    emailBridgeTitle: "Gmail status",
+    enableEmailBridgeLabel: "Enable Gmail scan",
+    bridgeUrlLabel: "Gmail source",
     bridgeStatusIdle: "Source not connected",
     bridgeStatusReady: "Connected",
     bridgeStatusSyncing: "Syncing",
     bridgeStatusImported: "Imported",
-    bridgeStatusDisabled: "Bridge disabled",
-    bridgeStatusError: "Check mail host",
+    bridgeStatusDisabled: "Scan disabled",
+    bridgeStatusError: "Check Gmail",
     bridgeStatusReview: "Needs review",
     bridgeStatusBlocked: "Blocked",
     bridgeServiceStateLabel: "State",
@@ -1067,15 +1067,15 @@ const labels = {
     bridgeMatchedLabel: "Matched",
     bridgeNeedReviewLabel: "Need review",
     bridgeDuplicateLabel: "Duplicate",
-    checkBridge: "Check mail host",
+    checkBridge: "Check Gmail",
     syncEmailNow: "Scan payment email",
     importLatestPayment: "Use latest payment",
     viewLatestRecords: "View payments",
-    openBridgeSetup: "Setup source",
+    openBridgeSetup: "Connect Gmail",
     bridgeCheckSuccess: "Email Sync is ready.",
-    bridgeCheckFailed: "Could not connect to Local Sync. Start START_RevenueFlow_Local_Email_Sync.cmd or open Setup source, then try again.",
-    bridgeSyncSuccess: "Payment mailbox scanned.",
-    bridgeLatestEmpty: "No matching payment is available in the mailbox yet.",
+    bridgeCheckFailed: "Could not connect to Gmail. Click Connect Gmail, then try again.",
+    bridgeSyncSuccess: "Gmail payment scan finished.",
+    bridgeLatestEmpty: "No matching payment is available in Gmail yet.",
     bridgeImportSuccess: "Latest payment imported into the review form.",
     sheetRowTitle: "Save to Sheet",
     copy: "Copy",
@@ -1089,9 +1089,9 @@ const labels = {
     noHistory: "No history yet.",
     reliable: "reliable",
     needsReview: "needs review",
-    ready: "Ready. Start the payment workflow to let the service scan the mailbox and import the latest payment.",
+    ready: "Ready. Start the payment workflow to scan Gmail and import the latest payment.",
     gmailReadFailed: "Could not read Gmail content. Reload the Gmail tab, then try again.",
-    sidePanelReady: "Ready. Start the payment workflow to scan the mailbox.",
+    sidePanelReady: "Ready. Start the payment workflow to scan Gmail.",
     rateSourceEmpty: "Manual rate. You can edit it in Settings.",
     datePlaceholder: "07/06/2026",
     emailTypePlaceholder: "Payment received",
@@ -3673,15 +3673,6 @@ function setGoogleStatus(message = "", state = "ready") {
 }
 
 function renderGmailAccount(email = connectedGmail) {
-  if (isLocalEmailSyncMode()) {
-    el.gmailAccountEmail.textContent = config.language === "en" ? "Internal mail host" : "Mail host nội bộ";
-    el.gmailAccountEmail.dataset.connected = "true";
-    el.connectGmailAccount.textContent = t("checkBridge");
-    el.accountSwitchHelp.hidden = true;
-    el.sheetAccountHint.textContent = t("sheetAccountMissing");
-    renderSetupChecklist();
-    return;
-  }
   connectedGmail = String(email || "").trim();
   el.gmailAccountEmail.textContent = connectedGmail || t("gmailAccountDisconnected");
   el.gmailAccountEmail.dataset.connected = connectedGmail ? "true" : "false";
@@ -3711,7 +3702,7 @@ function assertTargetGmailAccount(actualEmail) {
   if (expected && actual !== expected) {
     throw new Error(config.language === "en"
       ? `Connected to ${actual || "an unknown account"}, but this workspace is configured for ${expected}. Reconnect Gmail with the correct account.`
-      : `Đang kết nối ${actual || "tài khoản không xác định"}, nhưng mailbox cần quét là ${expected}. Hãy kết nối lại Gmail bằng đúng tài khoản.`);
+      : `Đang kết nối ${actual || "tài khoản không xác định"}, nhưng Gmail cần quét là ${expected}. Hãy kết nối lại Gmail bằng đúng tài khoản.`);
   }
 }
 
@@ -4528,11 +4519,11 @@ function renderEmailBridgeStatus(data = {}) {
 }
 
 function localBridgeBaseUrl() {
-  return String(config.bridgeUrl || defaultConfig.bridgeUrl || "http://127.0.0.1:8787").replace(/\/+$/, "");
+  return String(config.bridgeUrl || defaultConfig.bridgeUrl || "").replace(/\/+$/, "");
 }
 
 function cloudSyncBaseUrl() {
-  return String(config.cloudSyncUrl || defaultConfig.cloudSyncUrl || "http://127.0.0.1:8790").replace(/\/+$/, "");
+  return String(config.cloudSyncUrl || defaultConfig.cloudSyncUrl || "").replace(/\/+$/, "");
 }
 
 function cloudSyncToken() {
@@ -4540,30 +4531,18 @@ function cloudSyncToken() {
 }
 
 async function openLocalBridgeSetup() {
-  try {
-    await openExternalTab(isCloudSyncMode() ? `${cloudSyncBaseUrl()}/health` : `${localBridgeBaseUrl()}/setup`);
-    setStatus(isCloudSyncMode()
-      ? (config.language === "en" ? "Cloud Sync health opened." : "Đã mở kiểm tra Cloud Sync.")
-      : (config.language === "en" ? "Local Sync Setup opened." : "Đã mở Thiết lập nguồn Local Sync."),
-      "success");
-  } catch (error) {
-    setStatus(error && error.message ? error.message : t("bridgeCheckFailed"), "warning");
-  }
+  await connectGmailAccount();
 }
 
 function isCloudSyncMode() {
-  return String(config.emailSourceMode || defaultConfig.emailSourceMode || "").toLowerCase() === "cloud";
+  return false;
 }
 
 function isLocalEmailSyncMode() {
-  const mode = String(config.emailSourceMode || defaultConfig.emailSourceMode || "").toLowerCase();
-  if (mode === "cloud") return false;
-  return mode === "localimap" || /^https?:\/\/127\.0\.0\.1:8787/i.test(localBridgeBaseUrl());
+  return false;
 }
 
 function activeSourceName() {
-  if (isCloudSyncMode()) return "Cloud Sync";
-  if (isLocalEmailSyncMode()) return "Local Email Sync";
   return "Gmail";
 }
 
@@ -4572,26 +4551,26 @@ function localEmailSyncFriendlyError(rawError = "", code = "") {
   const lower = value.toLowerCase();
   if (code === "IMAP_AUTH_FAILED" || /authenticationfailed|authentication failed|login/.test(lower)) {
     return config.language === "en"
-      ? "RevenueFlow reached the mail host, but login was rejected. Open Setup source, check the mailbox user and password, then save and try again."
-      : "RevenueFlow đã tới được mail host, nhưng bị từ chối đăng nhập. Mở Thiết lập nguồn, kiểm tra mailbox user/password, lưu lại rồi thử tiếp.";
+      ? "RevenueFlow could not connect to Gmail. Reconnect Gmail, then try again."
+      : "RevenueFlow chưa kết nối được Gmail. Kết nối lại Gmail rồi thử tiếp.";
   }
   if (code === "IMAP_CONNECTION_FAILED" || /timeout|eacces|econnrefused|enotfound|etimedout|network|certificate/.test(lower)) {
     return config.language === "en"
-      ? "RevenueFlow cannot reach the mail host. Open Setup source to check host/port. If it is still blocked, switch to PayPal API or whitelist the sync server IP later."
-      : "RevenueFlow chưa kết nối được tới mail host. Mở Thiết lập nguồn để kiểm tra host/port. Nếu vẫn bị chặn, chuyển sang PayPal API hoặc whitelist IP sync sau.";
+      ? "RevenueFlow cannot reach Gmail right now. Check internet access, reconnect Gmail, then try again."
+      : "RevenueFlow chưa kết nối được Gmail lúc này. Kiểm tra mạng, kết nối lại Gmail rồi thử tiếp.";
   }
   if (code === "IMAP_CONFIG_MISSING" || /imap_user|imap_password/.test(lower)) {
     return config.language === "en"
-      ? "Email Sync is missing the mailbox user or password. Open Setup source and save the mail host details."
-      : "Email Sync còn thiếu mailbox user hoặc password. Mở Thiết lập nguồn và lưu thông tin mail host.";
+      ? "Gmail is not connected yet. Click Connect Gmail, then try again."
+      : "Gmail chưa được kết nối. Bấm Kết nối Gmail rồi thử lại.";
   }
   if (code === "PAYPAL_CONFIG_MISSING" || /paypal_client_id|paypal_client_secret/.test(lower)) {
     return config.language === "en"
-      ? "PayPal API credentials are missing. Open Setup source and save the PayPal Client ID and Secret."
-      : "Còn thiếu PayPal API credentials. Mở Thiết lập nguồn và lưu Client ID/Secret của PayPal.";
+      ? "This global build uses Gmail OAuth. Connect Gmail, then scan payment emails."
+      : "Bản global dùng Gmail OAuth. Hãy kết nối Gmail rồi quét email payment.";
   }
   if (/failed to fetch|load failed|networkerror/.test(lower)) return t("bridgeCheckFailed");
-  return value.replace(/LOGIN\s+"[^"]*"\s+"[^"]*"/i, 'LOGIN "<mailbox>" "<hidden>"') || t("bridgeCheckFailed");
+  return value.replace(/LOGIN\s+"[^"]*"\s+"[^"]*"/i, 'LOGIN "<email>" "<hidden>"') || t("bridgeCheckFailed");
 }
 
 function cloudSyncFriendlyError(rawError = "", code = "") {
@@ -4599,20 +4578,20 @@ function cloudSyncFriendlyError(rawError = "", code = "") {
   const lower = value.toLowerCase();
   if (code === "UNAUTHORIZED" || /unauthorized|invalid revenueflow api token|missing.*token/.test(lower)) {
     return config.language === "en"
-      ? "Cloud Sync rejected the token. Check the internal Cloud token, then try again."
-      : "Cloud Sync từ chối token. Kiểm tra token Cloud nội bộ rồi thử lại.";
+      ? "Gmail authorization was rejected. Reconnect Gmail, then try again."
+      : "Quyền Gmail bị từ chối. Kết nối lại Gmail rồi thử tiếp.";
   }
   if (/paypal api credentials|paypal client|client_id|client_secret/.test(lower)) {
     return config.language === "en"
-      ? "Cloud Sync is running, but PayPal is not configured yet. Use CSV fallback or add PayPal credentials on the backend."
-      : "Cloud Sync đang chạy, nhưng chưa cấu hình PayPal. Dùng CSV fallback hoặc thêm PayPal credentials ở backend.";
+      ? "This global build reads payment emails from Gmail, not PayPal API credentials."
+      : "Bản global đọc email payment từ Gmail, không dùng PayPal API credentials.";
   }
   if (/failed to fetch|load failed|networkerror|unable to connect|connection refused/.test(lower)) {
     return config.language === "en"
-      ? "Cloud Sync is not reachable. Start RevenueFlow Cloud Sync at http://127.0.0.1:8790, then try again."
-      : "Chưa kết nối được Cloud Sync. Chạy RevenueFlow Cloud Sync tại http://127.0.0.1:8790 rồi thử lại.";
+      ? "Gmail is not reachable. Check internet access, reconnect Gmail, then try again."
+      : "Chưa kết nối được Gmail. Kiểm tra mạng, kết nối lại Gmail rồi thử tiếp.";
   }
-  return value || (config.language === "en" ? "Cloud Sync request failed." : "Cloud Sync chưa xử lý được yêu cầu.");
+  return value || (config.language === "en" ? "Gmail request failed." : "Gmail chưa xử lý được yêu cầu.");
 }
 
 function canFallbackToLocalSync(error) {
@@ -4622,12 +4601,14 @@ function canFallbackToLocalSync(error) {
 }
 
 async function switchToLocalSyncFallback() {
-  config.emailSourceMode = "localimap";
-  config.bridgeUrl = config.bridgeUrl || defaultConfig.bridgeUrl;
+  config.emailSourceMode = "gmail";
+  config.bridgeUrl = "";
+  config.cloudSyncUrl = "";
+  config.cloudSyncToken = "";
   await saveConfig();
   setStatus(config.language === "en"
-    ? "Cloud Sync is not running, so RevenueFlow switched to Local Sync/Webmail."
-    : "Cloud Sync chưa chạy, RevenueFlow đã chuyển sang Local Sync/Webmail.",
+    ? "RevenueFlow will scan Gmail directly."
+    : "RevenueFlow sẽ quét Gmail trực tiếp.",
     "warning");
 }
 
@@ -4647,7 +4628,7 @@ async function localBridgeRequest(path, options = {}) {
   try {
     data = text ? JSON.parse(text) : {};
   } catch (error) {
-    throw new Error(config.language === "en" ? "Local Email Sync returned an invalid response." : "Email Sync local trả về phản hồi không hợp lệ.");
+    throw new Error(config.language === "en" ? "Gmail returned an invalid response." : "Gmail trả về phản hồi không hợp lệ.");
   }
   if (!res.ok || data.ok === false) throw new Error(localEmailSyncFriendlyError(data.error || res.statusText || t("bridgeCheckFailed"), data.errorCode));
   return data;
@@ -4673,7 +4654,7 @@ async function cloudSyncRequest(path, options = {}) {
   try {
     data = text ? JSON.parse(text) : {};
   } catch (error) {
-    throw new Error(config.language === "en" ? "Cloud Sync returned an invalid response." : "Cloud Sync trả về phản hồi không hợp lệ.");
+    throw new Error(config.language === "en" ? "Gmail returned an invalid response." : "Gmail trả về phản hồi không hợp lệ.");
   }
   if (!res.ok || data.ok === false) throw new Error(cloudSyncFriendlyError(data.error || res.statusText || t("bridgeCheckFailed"), data.errorCode));
   return data;
@@ -4691,7 +4672,7 @@ async function checkLocalEmailBridge() {
   const data = await localBridgeRequest("/health");
   renderEmailBridgeStatus({
     ok: true,
-    serviceState: data.mailboxConfigured ? "ready" : "review",
+    serviceState: data.accountConfigured ? "ready" : "review",
     lastSyncAt: workflowContext.emailBridge && workflowContext.emailBridge.lastSyncAt ? workflowContext.emailBridge.lastSyncAt : "",
     summary: {
       scannedCount: bridgeQueueRecords.length,
@@ -4703,7 +4684,7 @@ async function checkLocalEmailBridge() {
     },
     records: bridgeQueueRecords
   });
-  setStatus(`${t("bridgeCheckSuccess")} ${data.mailbox || ""}`.trim(), data.mailboxConfigured ? "success" : "warning");
+  setStatus(`${t("bridgeCheckSuccess")} ${data.email || ""}`.trim(), data.accountConfigured ? "success" : "warning");
   return data;
 }
 
@@ -4738,8 +4719,8 @@ async function checkCloudSyncBridge() {
   });
   const paypalReady = source.paypalApi && source.paypalApi.available;
   setStatus(paypalReady
-    ? (config.language === "en" ? "Cloud Sync is ready with PayPal API." : "Cloud Sync đã sẵn sàng với PayPal API.")
-    : (config.language === "en" ? "Cloud Sync is running. PayPal API is not configured yet; CSV fallback is available." : "Cloud Sync đang chạy. PayPal API chưa cấu hình; có thể dùng CSV fallback."),
+    ? (config.language === "en" ? "Gmail scan is ready." : "Quét Gmail đã sẵn sàng.")
+    : (config.language === "en" ? "Gmail scan is ready. Connect Gmail if prompted." : "Quét Gmail đã sẵn sàng. Kết nối Gmail nếu được hỏi."),
     paypalReady ? "success" : "warning");
   return data;
 }
@@ -4748,7 +4729,7 @@ async function syncCloudSyncBridge() {
   const data = await cloudSyncRequest("/v1/paypal/sync", { method: "POST" });
   const recordsFromBridge = useLocalBridgeRecords(data);
   setStatus(recordsFromBridge.length
-    ? (config.language === "en" ? "Cloud Sync imported payment records." : "Cloud Sync đã lấy payment.")
+    ? (config.language === "en" ? "Gmail scan imported payment records." : "Quét Gmail đã lấy payment.")
     : t("bridgeLatestEmpty"),
     recordsFromBridge.length ? "success" : "warning");
   return recordsFromBridge;
@@ -4763,7 +4744,7 @@ async function checkEmailBridge() {
   setBridgeActionBusy(true);
   try {
     if (isCloudSyncMode()) {
-      setStatus(config.language === "en" ? "Checking Cloud Sync..." : "Đang kiểm tra Cloud Sync...", "ready");
+      setStatus(config.language === "en" ? "Checking Gmail..." : "Đang kiểm tra Gmail...", "ready");
       try {
         return await checkCloudSyncBridge();
       } catch (error) {
@@ -4859,11 +4840,7 @@ async function syncEmailBridge() {
 async function startPaymentWorkflow() {
   setBridgeActionBusy(true);
   setBridgeStatus(t("bridgeStatusSyncing"), "warning");
-  setStatus(isCloudSyncMode()
-    ? (config.language === "en" ? "Scanning Cloud Sync payments..." : "Đang quét payment qua Cloud Sync...")
-    : isLocalEmailSyncMode()
-      ? (config.language === "en" ? "Scanning the local payment mailbox..." : "Đang quét mailbox payment local...")
-    : (config.language === "en" ? "Scanning Gmail and preparing the latest payment..." : "Đang quét Gmail và chuẩn bị payment mới nhất..."),
+  setStatus(config.language === "en" ? "Scanning Gmail and preparing the latest payment..." : "Đang quét Gmail và chuẩn bị payment mới nhất...",
     "ready");
   try {
     let recordsFromBridge;
@@ -5420,11 +5397,11 @@ async function saveConfig() {
     accountingConnectorNotes: el.accountingConnectorNotes ? el.accountingConnectorNotes.value.trim() : "",
     autoIncrementInvoice: el.autoIncrementInvoice.checked,
     autoWriteSheet: el.autoWriteSheet.checked,
-    enableEmailBridge: true,
-    bridgeUrl: el.bridgeUrl && el.bridgeUrl.value ? el.bridgeUrl.value.trim() : defaultConfig.bridgeUrl,
-    cloudSyncUrl: config.cloudSyncUrl || defaultConfig.cloudSyncUrl,
-    cloudSyncToken: config.cloudSyncToken || defaultConfig.cloudSyncToken,
-    emailSourceMode: config.emailSourceMode || defaultConfig.emailSourceMode,
+    enableEmailBridge: false,
+    bridgeUrl: "",
+    cloudSyncUrl: "",
+    cloudSyncToken: "",
+    emailSourceMode: "gmail",
     fontFamily: el.fontFamily.value || defaultConfig.fontFamily,
     fontSize: Math.max(12, Math.min(18, Number(el.fontSize.value || defaultConfig.fontSize))),
     primaryColor: el.primaryColor.value || defaultConfig.primaryColor,
@@ -5455,24 +5432,16 @@ function applyConfig(nextConfig) {
   if (!incoming.configVersion && String(incoming.targetGmailAccount || "").toLowerCase() === "admin@netbasejsc.com") {
     config.targetGmailAccount = "";
   }
-  config.bridgeUrl = incoming.bridgeUrl || defaultConfig.bridgeUrl;
-  config.cloudSyncUrl = incoming.cloudSyncUrl || defaultConfig.cloudSyncUrl;
-  config.cloudSyncToken = incoming.cloudSyncToken || defaultConfig.cloudSyncToken;
-  config.emailSourceMode = incoming.emailSourceMode || defaultConfig.emailSourceMode;
-  if (String(incoming.configVersion || "").localeCompare("6.8.0", undefined, { numeric: true }) < 0) {
-    config.emailSourceMode = "localimap";
-    config.bridgeUrl = defaultConfig.bridgeUrl;
-  } else if (String(incoming.configVersion || "").localeCompare("6.6.0", undefined, { numeric: true }) < 0) {
-    config.emailSourceMode = "cloud";
-    config.cloudSyncUrl = defaultConfig.cloudSyncUrl;
-    config.cloudSyncToken = defaultConfig.cloudSyncToken;
-  }
-  config.enableEmailBridge = true;
+  config.bridgeUrl = "";
+  config.cloudSyncUrl = "";
+  config.cloudSyncToken = "";
+  config.emailSourceMode = "gmail";
+  config.enableEmailBridge = false;
   config.rulesText = sanitizeProductRulesText(config.rulesText);
   config.productAliases = normalizeProductAliases(config.productAliases || []);
   config.sheetFieldColumns = normalizeSheetFieldColumns(config.sheetFieldColumns || defaultConfig.sheetFieldColumns);
   if (config.product && (REVIEW_PRODUCT_PATTERN.test(config.product) || INTERNAL_PRODUCT_PATTERN.test(config.product) || isLegacySampleProductName(config.product))) config.product = "";
-  if (config.sheetName === "Recurring 2026") config.sheetName = defaultConfig.sheetName;
+  if (/^Recurring\s+\d{4}$/i.test(String(config.sheetName || ""))) config.sheetName = defaultConfig.sheetName;
   if (String(incoming.configVersion || "").localeCompare("6.2.0", undefined, { numeric: true }) < 0) {
     config.rulesText = sanitizeProductRulesText(config.rulesText);
     config.productAliases = normalizeProductAliases(config.productAliases).filter((alias) => !alias.keywords.some((keyword) => INTERNAL_PRODUCT_PATTERN.test(keyword)));
@@ -5511,7 +5480,7 @@ function applyConfig(nextConfig) {
   if (el.accountingTemplateText) el.accountingTemplateText.value = config.accountingTemplateText || "";
   el.autoIncrementInvoice.checked = config.autoIncrementInvoice;
   el.autoWriteSheet.checked = config.autoWriteSheet;
-  el.enableEmailBridge.checked = true;
+  el.enableEmailBridge.checked = false;
   el.bridgeUrl.value = config.bridgeUrl || defaultConfig.bridgeUrl;
   el.fontSize.value = config.fontSize || defaultConfig.fontSize;
   el.primaryColor.value = config.primaryColor || defaultConfig.primaryColor;
@@ -5757,7 +5726,7 @@ el.resetAppearance.addEventListener("click", async () => {
 });
 el.copyRow.addEventListener("click", () => copyAndSave(false));
 if (el.quickAddProductInline) el.quickAddProductInline.addEventListener("click", handleInlineAddProduct);
-if (el.setupConnectGmail) el.setupConnectGmail.addEventListener("click", () => isLocalEmailSyncMode() ? checkEmailBridge() : connectGmailAccount());
+if (el.setupConnectGmail) el.setupConnectGmail.addEventListener("click", connectGmailAccount);
 if (el.setupCreateSheet) el.setupCreateSheet.addEventListener("click", setupDefaultSheet);
 if (el.setupScanPayments) el.setupScanPayments.addEventListener("click", startPaymentWorkflow);
 if (el.loadDemoPayment) el.loadDemoPayment.addEventListener("click", loadDemoPaymentRecord);
@@ -5771,7 +5740,7 @@ if (el.quickFixActions) {
     await runSetupAction(action);
   });
 }
-el.connectGmailAccount.addEventListener("click", () => isLocalEmailSyncMode() ? checkEmailBridge() : connectGmailAccount());
+el.connectGmailAccount.addEventListener("click", connectGmailAccount);
 el.disconnectGmailAccount.addEventListener("click", disconnectGmailAccount);
 el.copyOAuthExtensionId.addEventListener("click", async () => {
   const extensionId = getGoogleOAuthSetup().extensionId;

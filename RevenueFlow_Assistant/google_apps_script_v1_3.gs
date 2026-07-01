@@ -1,4 +1,4 @@
-const DEFAULT_START_CELL = "B9";
+const DEFAULT_START_CELL = "A2";
 
 function doPost(e) {
   try {
