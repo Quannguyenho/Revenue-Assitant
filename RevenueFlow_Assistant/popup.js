@@ -6,10 +6,12 @@ let currentRow = "";
 let historyItems = [];
 let config = {};
 let saveTimer = null;
+let rateRefreshTimer = null;
 let googleAuthInProgress = false;
 let connectedGmail = "";
 let lastVerifiedSheetWriteAt = "";
 let lastVerifiedSheetWrite = null;
+let lastRateRefreshAt = "";
 let gmailScanStats = { queried: 0, ignored: 0, unmatched: 0, matched: 0 };
 let gatewayRules = [];
 let workflowContext = {
@@ -30,6 +32,9 @@ const GMAIL_READONLY_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
 const GOOGLE_SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
 const GMAIL_SCAN_DAYS = 365;
 const GMAIL_SCAN_LIMIT = 100;
+const EXCHANGE_RATE_API_URL = "https://open.er-api.com/v6/latest/USD";
+const RATE_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
+const RATE_API_TIMEOUT_MS = 10000;
 const REVENUEFLOW_SHEET_HEADERS = ["Date", "Customer", "Reference", "Product / service", "USD", "Provider", "VND gross", "Rate", "Invoice no.", "Invoice date"];
 const SHEET_FIELD_KEYS = ["date", "customerName", "orderNo", "product", "usd", "provider", "grossVnd", "rate", "invoiceNo", "invoiceDate"];
 const DEFAULT_SHEET_FIELD_COLUMNS = {
@@ -72,7 +77,7 @@ function serializePaymentSourceRules(rules) {
 }
 
 const defaultConfig = {
-  configVersion: "6.9.0",
+  configVersion: "6.10.0",
   rate: 26124,
   product: "",
   rulesText: defaultRules.map((r) => `${r.amount}=${r.name}`).join("\n"),
@@ -314,13 +319,13 @@ const labels = {
     setupCardRulesHelp: "Bật cổng thanh toán và map sản phẩm.",
     settingsToggleTitle: "Mở cấu hình",
     rateSettingsTitle: "Tỷ giá & hóa đơn",
-    rateSettingsHelp: "Chỉ cần chỉnh khi tỷ giá, số hóa đơn hoặc VAT/phí thay đổi.",
+    rateSettingsHelp: "RevenueFlow tự cập nhật tỷ giá khi bạn dùng extension. Bấm Cập nhật tỷ giá nếu muốn lấy giá mới ngay.",
     sheetSettingsTitle: "Google Sheet & account",
     googleSheetSetupHelp: "Set where records are saved. Re-check the Sheet after changing tab name or start cell.",
     behaviorSettingsTitle: "Tự động hóa & an toàn",
     behaviorSettingsHelp: "Giữ mặc định nếu không chắc. Các tùy chọn này quyết định khi nào được copy hoặc ghi Sheet.",
     saveSettings: "Lưu",
-    getRate: "Lấy tỷ giá",
+    getRate: "Cập nhật tỷ giá",
     dateLabel: "Ngày",
     emailTypeLabel: "Loại email",
     customerLabel: "Khách hàng",
@@ -580,7 +585,7 @@ const labels = {
     ready: "Sẵn sàng. Bấm Bắt đầu xử lý payment để quét Gmail và lấy payment mới nhất.",
     gmailReadFailed: "Không đọc được nội dung Gmail. Hãy reload tab Gmail rồi thử lại.",
     sidePanelReady: "Sẵn sàng. Bấm Bắt đầu xử lý payment để quét Gmail.",
-    rateSourceEmpty: "Tỷ giá nhập tay. Có thể chỉnh trong Settings.",
+    rateSourceEmpty: "Tỷ giá sẽ tự cập nhật khi bạn dùng RevenueFlow. Nếu mạng lỗi, RevenueFlow giữ tỷ giá hiện tại.",
     datePlaceholder: "07/06/2026",
     emailTypePlaceholder: "Payment received",
     invoiceNoPlaceholder: "Điền vào đây",
@@ -827,12 +832,12 @@ const labels = {
     setupCardRulesHelp: "Enable payment providers and map products.",
     settingsToggleTitle: "Open settings",
     rateSettingsTitle: "Rate & invoice",
-    rateSettingsHelp: "Change only when the exchange rate, invoice number, VAT, or fee changes.",
+    rateSettingsHelp: "RevenueFlow auto-updates the rate while you use the extension. Click Refresh rate to load the latest rate now.",
     sheetSettingsTitle: "Google Sheet",
     behaviorSettingsTitle: "Automation & safety",
     behaviorSettingsHelp: "Keep the defaults if unsure. These options control when RevenueFlow may copy or write data.",
     saveSettings: "Save",
-    getRate: "Get rate",
+    getRate: "Refresh rate",
     dateLabel: "Date",
     emailTypeLabel: "Email type",
     customerLabel: "Customer",
@@ -1092,7 +1097,7 @@ const labels = {
     ready: "Ready. Start the payment workflow to scan Gmail and import the latest payment.",
     gmailReadFailed: "Could not read Gmail content. Reload the Gmail tab, then try again.",
     sidePanelReady: "Ready. Start the payment workflow to scan Gmail.",
-    rateSourceEmpty: "Manual rate. You can edit it in Settings.",
+    rateSourceEmpty: "Rate auto-updates while you use RevenueFlow. If the network fails, RevenueFlow keeps the current rate.",
     datePlaceholder: "07/06/2026",
     emailTypePlaceholder: "Payment received",
     invoiceNoPlaceholder: "Type here",
@@ -3162,28 +3167,78 @@ async function readPageText() {
 }
 
 async function getUsdRate() {
-  // Chrome Web Store release: no third-party exchange-rate scraping.
-  // Users can enter their preferred accounting exchange rate manually.
-  return { value: Number(el.rate.value || 26124), source: "Manual" };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), RATE_API_TIMEOUT_MS);
+  try {
+    const res = await fetch(EXCHANGE_RATE_API_URL, { cache: "no-store", signal: controller.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const value = Number(data && data.rates && data.rates.VND);
+    if (!Number.isFinite(value) || value <= 0) throw new Error("USD/VND rate is missing.");
+    return {
+      value: Math.round(value),
+      source: "open.er-api.com",
+      updatedAt: data.time_last_update_utc || new Date().toISOString()
+    };
+  } catch (error) {
+    const message = error && error.name === "AbortError"
+      ? (config.language === "en" ? "Rate service timed out." : "Dịch vụ tỷ giá phản hồi quá lâu.")
+      : (error && error.message ? error.message : String(error || ""));
+    return {
+      value: Number(el.rate.value || defaultConfig.rate),
+      source: "Manual",
+      error: message
+    };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
-async function refreshRate() {
-  setBusy(true);
+function rateSourceText(rate) {
+  const value = vnd(rate.value);
+  const time = rate.updatedAt
+    ? new Date(rate.updatedAt).toLocaleString(config.language === "en" ? "en-US" : "vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })
+    : "";
+  if (rate.source === "Manual") {
+    return config.language === "en"
+      ? `Using current manual rate: ${value}${rate.error ? ` (${rate.error})` : ""}`
+      : `Đang dùng tỷ giá nhập tay: ${value}${rate.error ? ` (${rate.error})` : ""}`;
+  }
+  return config.language === "en"
+    ? `Live rate ${rate.source}: ${value}${time ? ` · updated ${time}` : ""}`
+    : `Tỷ giá realtime ${rate.source}: ${value}${time ? ` · cập nhật ${time}` : ""}`;
+}
+
+async function refreshRate(options = {}) {
+  const silent = options.silent === true;
+  if (!silent) setBusy(true);
   try {
-    setStatus(config.language === "en" ? "Using manual USD/VND rate..." : "Đang dùng tỷ giá nhập tay...", "ready");
+    if (!silent) setStatus(config.language === "en" ? "Updating live USD/VND rate..." : "Đang cập nhật tỷ giá USD/VND realtime...", "ready");
     const rate = await getUsdRate();
     el.rate.value = rate.value;
-    el.rateSource.textContent = rate.source === "Vietcombank"
-      ? (config.language === "en" ? `Vietcombank rate: ${vnd(rate.value)}` : `Tỷ giá từ Vietcombank: ${vnd(rate.value)}`)
-      : (config.language === "en" ? `Automatic rate failed, using manual rate: ${vnd(rate.value)}` : `Không lấy được tự động, đang dùng tỷ giá nhập tay: ${vnd(rate.value)}`);
+    lastRateRefreshAt = new Date().toISOString();
+    el.rateSource.textContent = rateSourceText(rate);
     updateRow();
     await saveConfig();
-    setStatus(rate.source === "Vietcombank" ? (config.language === "en" ? "Rate updated." : "Đã cập nhật tỷ giá.") : (config.language === "en" ? "Using manual rate." : "Đang dùng tỷ giá nhập tay."), rate.source === "Vietcombank" ? "success" : "warning");
+    if (!silent) {
+      setStatus(rate.source === "Manual"
+        ? (config.language === "en" ? "Live rate unavailable. Using current manual rate." : "Chưa lấy được tỷ giá realtime. Đang dùng tỷ giá nhập tay.")
+        : (config.language === "en" ? "Live rate updated." : "Đã cập nhật tỷ giá realtime."),
+        rate.source === "Manual" ? "warning" : "success");
+    }
   } catch (err) {
-    setStatus(config.language === "en" ? `Rate update failed: ${err.message}` : `Lỗi cập nhật tỷ giá: ${err.message}`, "error");
+    if (!silent) setStatus(config.language === "en" ? `Rate update failed: ${err.message}` : `Lỗi cập nhật tỷ giá: ${err.message}`, "error");
   } finally {
-    setBusy(false);
+    if (!silent) setBusy(false);
   }
+}
+
+function startRateAutoRefresh() {
+  if (rateRefreshTimer) clearInterval(rateRefreshTimer);
+  refreshRate({ silent: true });
+  rateRefreshTimer = setInterval(() => {
+    refreshRate({ silent: true });
+  }, RATE_REFRESH_INTERVAL_MS);
 }
 
 function looksLikePayPal(text, parsed) {
@@ -3476,9 +3531,7 @@ async function buildRows({ copy = false } = {}) {
     setStatus(config.language === "en" ? "Updating rate..." : "Đang cập nhật tỷ giá...", "ready");
     const rate = await getUsdRate();
     el.rate.value = rate.value;
-    el.rateSource.textContent = rate.source === "Vietcombank"
-      ? (config.language === "en" ? `Vietcombank rate: ${vnd(rate.value)}` : `Tỷ giá từ Vietcombank: ${vnd(rate.value)}`)
-      : (config.language === "en" ? `Automatic rate failed, using manual rate: ${vnd(rate.value)}` : `Không lấy được tự động, đang dùng tỷ giá nhập tay: ${vnd(rate.value)}`);
+    el.rateSource.textContent = rateSourceText(rate);
 
     renderForm(records[0]);
     const missing = missingFields(records[0]);
@@ -5551,6 +5604,7 @@ async function init() {
   setStatus(t("sidePanelReady"), "success");
   renderSmartSuggestions();
   updateProductUndoButtons();
+  startRateAutoRefresh();
 }
 
 el.autoRun.addEventListener("click", () => buildRows({ copy: true }));

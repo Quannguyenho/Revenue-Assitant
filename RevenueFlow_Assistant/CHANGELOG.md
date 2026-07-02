@@ -1,5 +1,14 @@
 # RevenueFlow Assistant Changelog
 
+## v6.10.0 - Live Exchange Rate Refresh
+
+- Updated the package version to `6.10.0`.
+- Added live USD/VND exchange-rate refresh for the global build using a public no-key rate endpoint.
+- Added automatic refresh while the side panel is open.
+- Changed the rate button to refresh the current rate immediately on demand.
+- Kept manual-rate fallback when the network or rate endpoint is unavailable.
+- Added the narrow `https://open.er-api.com/*` host permission for exchange-rate reads only.
+
 ## v6.9.0 - Global Gmail Build Cleanup
 
 - Updated the package version to `6.9.0`.

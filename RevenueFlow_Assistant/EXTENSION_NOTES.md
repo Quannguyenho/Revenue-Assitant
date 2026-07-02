@@ -6,7 +6,7 @@ This file records product and implementation decisions for the global Chrome ext
 
 - Global source folder: `D:\Q project\RevenueFlow_Assistant_v2_3_0_Best_UX`
 - Global package: `D:\Q project\RevenueFlow_Assistant_Latest.zip`
-- Current global release: `v6.9.0`
+- Current global release: `v6.10.0`
 - Netbase accounting-specific work belongs only in `D:\Q project\RevenueFlow_Assistant_Netbase_Local`.
 
 ## Product Direction
@@ -26,6 +26,7 @@ This file records product and implementation decisions for the global Chrome ext
 - The extension should only write after user review unless the user explicitly enables automation.
 - Do not mark a record as saved unless the Google Sheets write is verified.
 - Do not issue, sign, send, or submit invoices automatically.
+- Live exchange-rate refresh may call `https://open.er-api.com/v6/latest/USD`; no Gmail, Sheet, customer, or payment data is sent to that endpoint.
 
 ## Google Sheet Rules
 
@@ -76,6 +77,13 @@ This file records product and implementation decisions for the global Chrome ext
 - Create versioned ZIP archives only when explicitly requested.
 
 ## Current Release Note
+
+### v6.10.0
+
+- Global build now auto-refreshes USD/VND while the side panel is open.
+- Users can click `Cập nhật tỷ giá` / `Refresh rate` to reload the current exchange rate immediately.
+- If the rate endpoint or network is unavailable, RevenueFlow keeps the current manual rate and shows fallback status.
+- Added a narrow host permission for `https://open.er-api.com/*` for exchange-rate reads only.
 
 ### v6.9.0
 

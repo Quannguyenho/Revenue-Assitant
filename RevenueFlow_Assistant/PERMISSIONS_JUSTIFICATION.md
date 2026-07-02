@@ -20,6 +20,7 @@ Required only when the user chooses Copy or Copy all to place prepared Sheet row
 
 - `https://gmail.googleapis.com/*`: read-only Gmail mailbox scanning through the Gmail API.
 - `https://sheets.googleapis.com/*`: official Google Sheets API endpoint for creating the user's RevenueFlow spreadsheet, testing placement, and writing reviewed rows.
+- `https://open.er-api.com/*`: read-only public exchange-rate endpoint used to refresh USD/VND while the side panel is open. RevenueFlow sends no Gmail, Sheet, customer, or payment data to this endpoint.
 
 ## OAuth scopes
 
