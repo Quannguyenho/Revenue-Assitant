@@ -1237,10 +1237,26 @@ body.dark .ux-v23 .ux-product-field { background: var(--panel-2); border-color: 
   white-space: nowrap;
 }
 
-.sheet-primary-action {
+.sheet-write-actions {
+  display:grid;
+  grid-template-columns:minmax(96px,.38fr) minmax(0,1fr);
+  gap:8px;
+  margin-top:10px;
+}
+
+.sheet-primary-action,
+.sheet-rewrite-button {
   width: 100%;
   min-height: 48px;
-  margin-top: 10px;
+}
+
+.sheet-rewrite-button {
+  font-weight: 850;
+}
+
+.sheet-rewrite-button:disabled {
+  opacity:.52;
+  cursor:not-allowed;
 }
 
 .sheet-secondary-tools {
@@ -3398,6 +3414,9 @@ body.dark .settings-panel.settings-v33 .settings-nested{
   font-size:14px;
   box-shadow:none;
 }
+
+.compact-ui .sheet-write-actions{gap:7px;margin-top:8px;grid-template-columns:minmax(86px,.34fr) minmax(0,1fr)}
+.compact-ui .sheet-rewrite-button{min-height:44px;border-radius:13px;font-size:13px}
 
 .compact-ui .sheet-action-status{
   margin-top:8px;

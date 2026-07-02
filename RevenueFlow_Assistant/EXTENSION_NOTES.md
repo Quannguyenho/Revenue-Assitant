@@ -6,7 +6,7 @@ This file records product and implementation decisions for the global Chrome ext
 
 - Global source folder: `D:\Q project\RevenueFlow_Assistant_v2_3_0_Best_UX`
 - Global package: `D:\Q project\RevenueFlow_Assistant_Latest.zip`
-- Current global release: `v6.17.0`
+- Current global release: `v6.18.0`
 - Netbase accounting-specific work belongs only in `D:\Q project\RevenueFlow_Assistant_Netbase_Local`.
 
 ## Product Direction
@@ -77,6 +77,12 @@ This file records product and implementation decisions for the global Chrome ext
 - Create versioned ZIP archives only when explicitly requested.
 
 ## Current Release Note
+
+### v6.18.0
+
+- The Sheet save area now has two distinct actions: `Save to Sheet` writes a new row, while `Update row` rewrites the already saved row for the selected payment.
+- Existing verified Sheet row ranges are retained per payment, including payments saved through bulk save.
+- This lets users correct reviewed payment details and update the same Sheet row without creating duplicates.
 
 ### v6.17.0
 

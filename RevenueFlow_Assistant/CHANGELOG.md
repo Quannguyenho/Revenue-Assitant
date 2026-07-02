@@ -1,5 +1,13 @@
 # RevenueFlow Assistant Changelog
 
+## v6.18.0 - Update Saved Sheet Row
+
+- Updated the package version to `6.18.0`.
+- Added a secondary `Update row` / `Ghi lại` action next to the main Sheet save button.
+- `Update row` rewrites the existing verified Sheet row after the user edits a saved payment.
+- `Save to Sheet` still writes the next new row according to the selected Sheet direction.
+- Bulk-saved payments now keep per-payment row ranges so later single-record updates target the right row.
+
 ## v6.17.0 - Rate In Payment Review
 
 - Updated the package version to `6.17.0`.

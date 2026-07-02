@@ -79,7 +79,7 @@ function serializePaymentSourceRules(rules) {
 }
 
 const defaultConfig = {
-  configVersion: "6.17.0",
+  configVersion: "6.18.0",
   rate: 26124,
   rateInfo: null,
   product: "",
@@ -282,6 +282,11 @@ const labels = {
     sheetVerifiedRange: "Vị trí",
     sheetVerifiedTime: "Lúc xác minh",
     sheetVerifiedOpen: "Mở đúng dòng vừa ghi",
+    rewriteSheet: "Ghi lại",
+    rewriteSheetUnavailable: "Payment này chưa có dòng cũ trong Sheet. Hãy bấm Lưu vào Sheet lần đầu trước.",
+    rewriteSheetMultiRow: "Dòng cũ đang là một vùng nhiều dòng. Hãy lưu lại từng payment riêng để RevenueFlow cập nhật đúng dòng.",
+    googleRewriting: "Đang ghi lại dòng cũ trong Google Sheet...",
+    rewriteSheetSuccess: "Đã ghi lại và xác minh tại {range}.",
     sheetColumnDate: "Ngày",
     sheetColumnCustomer: "Khách hàng",
     sheetColumnReference: "Mã tham chiếu",
@@ -805,6 +810,11 @@ const labels = {
     sheetVerifiedRange: "Location",
     sheetVerifiedTime: "Verified at",
     sheetVerifiedOpen: "Open saved row",
+    rewriteSheet: "Update row",
+    rewriteSheetUnavailable: "This payment does not have a saved Sheet row yet. Save it to Sheet first.",
+    rewriteSheetMultiRow: "The saved location is a multi-row range. Save payments individually before updating one row.",
+    googleRewriting: "Updating the existing Google Sheet row...",
+    rewriteSheetSuccess: "Updated and verified at {range}.",
     sheetColumnDate: "Date",
     sheetColumnCustomer: "Customer",
     sheetColumnReference: "Reference",
@@ -1257,6 +1267,7 @@ const el = {
   resetAppearance: document.getElementById("resetAppearance"),
   copyRow: document.getElementById("copyRow"),
   writeSheet: document.getElementById("writeSheet"),
+  rewriteSheet: document.getElementById("rewriteSheet"),
   accountingPreset: document.getElementById("accountingPreset"),
   accountingDraftStatus: document.getElementById("accountingDraftStatus"),
   accountingConnector: document.getElementById("accountingConnector"),
@@ -1672,7 +1683,7 @@ function setGoogleConnectAvailable() {
 }
 
 function setBusy(isBusy) {
-  [el.autoRun, el.buildOnly, el.forceCopy, el.getRate, el.quickRefreshRate, el.saveSettings, el.saveRules, el.copyRow, el.writeSheet, el.testSheet, el.copyAllRows, el.exportCsv, el.dashboardExportCsv, el.bulkCopyReady, el.bulkSaveReady, el.copyInvoiceDraft, el.copyAccountingRow, el.copyAccountingGuide, el.exportAccountingSample, el.exportMisaCsv, el.exportAccountingCsv].forEach((button) => {
+  [el.autoRun, el.buildOnly, el.forceCopy, el.getRate, el.quickRefreshRate, el.saveSettings, el.saveRules, el.copyRow, el.writeSheet, el.rewriteSheet, el.testSheet, el.copyAllRows, el.exportCsv, el.dashboardExportCsv, el.bulkCopyReady, el.bulkSaveReady, el.copyInvoiceDraft, el.copyAccountingRow, el.copyAccountingGuide, el.exportAccountingSample, el.exportMisaCsv, el.exportAccountingCsv].forEach((button) => {
     if (!button) return;
     button.disabled = isBusy;
   });
@@ -1680,7 +1691,7 @@ function setBusy(isBusy) {
 }
 
 function setSheetActionBusy(isBusy) {
-  [el.writeSheet, el.testSheet, el.createDefaultSheet, el.bulkSaveReady].forEach((button) => {
+  [el.writeSheet, el.rewriteSheet, el.testSheet, el.createDefaultSheet, el.bulkSaveReady].forEach((button) => {
     if (!button) return;
     button.disabled = isBusy;
   });
@@ -2768,10 +2779,19 @@ function renderForm(d = {}) {
   renderCustomFieldsSheetControls();
   renderConfidence(d);
   renderWarnings(d);
+  renderRewriteSheetAction(d);
   updateRow();
   updateAccountingPreview(d);
   renderSmartSuggestions(d);
   renderReviewSummary(d);
+}
+
+function renderRewriteSheetAction(record = records[activeIndex] || {}) {
+  if (!el.rewriteSheet) return;
+  el.rewriteSheet.disabled = !parseWrittenSheetRange(record && record.sheetRange);
+  el.rewriteSheet.title = el.rewriteSheet.disabled
+    ? t("rewriteSheetUnavailable")
+    : (config.language === "en" ? "Update the same Sheet row after editing this payment." : "Ghi lại đúng dòng Sheet cũ sau khi sửa payment này.");
 }
 
 function renderReviewSummary(d = {}) {
@@ -3877,6 +3897,47 @@ function rowValues(row) {
   return String(row || "").split("\t");
 }
 
+function unquoteSheetName(value) {
+  const text = String(value || "").trim();
+  if (text.startsWith("'") && text.endsWith("'")) return text.slice(1, -1).replace(/''/g, "'");
+  return text;
+}
+
+function parseWrittenSheetRange(value) {
+  const raw = String(value || "").trim();
+  const bang = raw.lastIndexOf("!");
+  if (bang < 1) return null;
+  const sheetName = unquoteSheetName(raw.slice(0, bang));
+  const range = raw.slice(bang + 1).trim().toUpperCase();
+  const match = range.match(/^([A-Z]+)(\d+)(?::([A-Z]+)(\d+))?$/);
+  if (!match) return null;
+  const startCol = match[1];
+  const startRow = Number(match[2]);
+  const endCol = match[3] || startCol;
+  const endRow = Number(match[4] || match[2]);
+  return {
+    sheetName,
+    startCol,
+    startRow,
+    endCol,
+    endRow,
+    startColNumber: columnNameToNumber(startCol),
+    endColNumber: columnNameToNumber(endCol),
+    rowCount: Math.max(1, endRow - startRow + 1)
+  };
+}
+
+function storedSheetRange(sheetName, a1Range) {
+  return `${sheetName}!${a1Range}`;
+}
+
+function sheetSingleRowRangeFromBlock(blockRange, rowOffset = 0) {
+  const parsed = parseWrittenSheetRange(blockRange);
+  if (!parsed) return "";
+  const row = parsed.startRow + rowOffset;
+  return storedSheetRange(parsed.sheetName, `${parsed.startCol}${row}:${parsed.endCol}${row}`);
+}
+
 function getGoogleOAuthSetup() {
   if (typeof chrome === "undefined" || !chrome.runtime || !chrome.runtime.getManifest) {
     return { clientId: "", extensionId: "", missingChrome: true };
@@ -4680,6 +4741,84 @@ async function writeRowsToSheet(rows) {
   }
 }
 
+async function rewriteCurrentRowToSheet(row, record = records[activeIndex] || {}) {
+  lastVerifiedSheetWriteAt = "";
+  lastVerifiedSheetWrite = null;
+  const target = parseWrittenSheetRange(record && record.sheetRange);
+  if (!target) {
+    const message = t("rewriteSheetUnavailable");
+    setStatus(message, "warning");
+    setSheetFeedback(message, "warning");
+    renderRewriteSheetAction(record);
+    return false;
+  }
+  if (target.rowCount !== 1) {
+    const message = t("rewriteSheetMultiRow");
+    setStatus(message, "warning");
+    setSheetFeedback(message, "warning");
+    return false;
+  }
+  const values = [rowValues(row)];
+  if (!values[0].length) {
+    setStatus(config.language === "en" ? "There is no row to update." : "Chưa có dòng để ghi lại.", "warning");
+    return false;
+  }
+  const spreadsheetId = (record.sheetTarget && record.sheetTarget.spreadsheetId)
+    || spreadsheetIdFromUrl(el.sheetUrl.value);
+  if (!spreadsheetId) {
+    openSheetSettings(config.language === "en" ? "Google Sheet link is missing." : "Chưa có link Google Sheet. Dán link Sheet vào ô đang được chọn.");
+    return false;
+  }
+  setSheetActionBusy(true);
+  if (el.sheetsApiSetupLink) el.sheetsApiSetupLink.hidden = true;
+  setGoogleStatus(t("googleRewriting"), "ready");
+  setStatus(t("googleRewriting"), "ready");
+  setSheetFeedback(t("googleRewriting"), "ready");
+  try {
+    const endCol = columnNumberToName(target.startColNumber + values[0].length - 1);
+    const visibleRange = `${target.startCol}${target.startRow}:${endCol}${target.startRow}`;
+    const range = `${sheetNameA1(target.sheetName)}!${visibleRange}`;
+    await runWithGoogleToken(async (token) => {
+      const updateResponse = await sheetsApi(token, `${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED&includeValuesInResponse=true&responseValueRenderOption=FORMATTED_VALUE`, {
+        method: "PUT",
+        body: JSON.stringify({ range, majorDimension: "ROWS", values })
+      });
+      await verifySheetWrite(token, spreadsheetId, range, updateResponse);
+      await focusSheetLink(token, spreadsheetId, target.sheetName, range);
+    });
+    lastVerifiedSheetWriteAt = new Date().toISOString();
+    lastVerifiedSheetWrite = {
+      spreadsheetId,
+      sheetName: target.sheetName,
+      range,
+      verifiedAt: lastVerifiedSheetWriteAt
+    };
+    const storedRange = storedSheetRange(target.sheetName, visibleRange);
+    record.writtenToSheet = true;
+    record.sheetWrittenAt = lastVerifiedSheetWriteAt;
+    record.sheetRange = storedRange;
+    record.sheetTarget = { ...lastVerifiedSheetWrite };
+    const message = tf("rewriteSheetSuccess", { range: storedRange });
+    renderSheetTarget(`${target.sheetName} - ${visibleRange}`);
+    setGoogleStatus(message, "success");
+    setStatus(message, "success");
+    setSheetFeedback(message, "success", { verifiedWrite: true });
+    hideQuickFixActions();
+    return true;
+  } catch (err) {
+    setGoogleStatus(err.message || t("googleConnectFailed"), "error");
+    const message = config.language === "en" ? `Sheet update failed: ${err.message}` : `Ghi lại Sheet lỗi: ${err.message}`;
+    setStatus(message, "error");
+    setSheetFeedback(message, "error");
+    if (el.sheetsApiSetupLink) el.sheetsApiSetupLink.hidden = !err.googleApiDisabled;
+    showQuickFixActions("sheet");
+    return false;
+  } finally {
+    setSheetActionBusy(false);
+    renderRewriteSheetAction(records[activeIndex] || record);
+  }
+}
+
 async function testSheetConnection() {
   const spreadsheetId = spreadsheetIdFromUrl(el.sheetUrl.value);
   const sheetName = el.sheetName.value.trim();
@@ -5294,12 +5433,17 @@ async function saveReadyPaymentsToSheet() {
   if (!wrote) return;
   const rangeText = lastVerifiedSheetWrite ? `${lastVerifiedSheetWrite.sheetName}!${lastVerifiedSheetWrite.range.split("!").pop()}` : "";
   const now = lastVerifiedSheetWriteAt || new Date().toISOString();
-  ready.forEach((record) => {
+  ready.forEach((record, index) => {
+    const rowRange = sheetSingleRowRangeFromBlock(rangeText, index) || rangeText;
     record.writtenToSheet = true;
     record.sheetWrittenAt = now;
-    record.sheetRange = rangeText;
+    record.sheetRange = rowRange;
+    record.sheetTarget = lastVerifiedSheetWrite ? { ...lastVerifiedSheetWrite, range: rowRange } : null;
   });
-  normalized.forEach((record, index) => addHistory({ ...record, writtenToSheet: true, sheetWrittenAt: now, sheetRange: rangeText }, rows.split("\n")[index], { writtenToSheet: true }));
+  normalized.forEach((record, index) => {
+    const rowRange = sheetSingleRowRangeFromBlock(rangeText, index) || rangeText;
+    addHistory({ ...record, writtenToSheet: true, sheetWrittenAt: now, sheetRange: rowRange }, rows.split("\n")[index], { writtenToSheet: true });
+  });
   renderPaymentInbox(bridgeQueueRecords);
   renderRecordSelector();
   renderSetupChecklist();
@@ -6065,6 +6209,32 @@ if (el.sheetActionStatus) el.sheetActionStatus.addEventListener("click", async (
     setSheetFeedback(config.language === "en" ? `Could not open Sheet: ${error.message}` : `Không mở được Sheet: ${error.message}`, "error");
   }
 });
+if (el.rewriteSheet) el.rewriteSheet.addEventListener("click", async () => {
+  await ensureFreshRate({ force: true, silent: true });
+  const d = formData();
+  const missing = missingFields(d);
+  const reviewed = d.reviewAccepted === true || d.shouldWriteToRevenueSheet === true || d.manualRevenueOverride === true;
+  if (!isRevenueWritable(d, { automatic: false }) && !reviewed) {
+    renderWarnings(d);
+    setStatus(config.language === "en" ? "Review this payment first, then enable Sheet writing if it is acceptable." : "Hãy kiểm tra payment trước, rồi bật cho phép ghi Sheet nếu dữ liệu chấp nhận được.", "warning");
+    return;
+  }
+  if (d.isDuplicate && !d.duplicateApproved && !reviewed) {
+    renderWarnings(d);
+    setStatus(t("reviewDuplicateHelp"), "warning");
+    return;
+  }
+  if (missing.length) renderWarnings(d);
+  currentRow = makeRow(d);
+  el.sheetRow.value = currentRow;
+  const wrote = await rewriteCurrentRowToSheet(currentRow, d);
+  if (!wrote) return;
+  if (records[activeIndex]) {
+    renderPaymentInbox(bridgeQueueRecords);
+    renderForm(records[activeIndex]);
+  }
+  await saveConfig();
+});
 el.writeSheet.addEventListener("click", async () => {
   await ensureFreshRate({ force: true, silent: true });
   const d = formData();
@@ -6089,6 +6259,7 @@ el.writeSheet.addEventListener("click", async () => {
     records[activeIndex].sheetWrittenAt = lastVerifiedSheetWriteAt;
     records[activeIndex].writtenToSheet = true;
     records[activeIndex].sheetRange = `${lastVerifiedSheetWrite.sheetName}!${lastVerifiedSheetWrite.range.split("!").pop()}`;
+    records[activeIndex].sheetTarget = { ...lastVerifiedSheetWrite };
     renderPaymentInbox(bridgeQueueRecords);
     renderForm(records[activeIndex]);
   }
