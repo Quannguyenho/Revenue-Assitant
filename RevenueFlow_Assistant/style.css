@@ -515,7 +515,7 @@ textarea.rules{height:110px}
 .custom-fields-column input{width:48px;min-height:30px!important;padding:6px 7px!important;text-align:center;text-transform:uppercase;font-size:11px!important;border-radius:10px!important}
 .adaptive-field-card{position:relative;display:block;min-width:0;padding:11px;border:1px solid rgba(217,228,240,.78);border-radius:18px;background:rgba(248,251,255,.86);box-shadow:0 12px 25px rgba(16,32,51,.07)}
 .adaptive-field-card .adaptive-field-name{width:calc(100% - 96px);min-height:24px!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;color:var(--muted);font-size:10px!important;font-weight:800}
-.adaptive-field-card .adaptive-field-write{position:absolute;top:9px;right:44px}
+.adaptive-field-card .adaptive-field-write{position:absolute;top:9px;right:44px;min-height:24px!important;height:24px;padding:4px 8px!important;line-height:1;border-radius:999px!important;box-shadow:none!important}
 .adaptive-field-card [data-custom-value]{margin-top:8px}
 .custom-field-remove{position:absolute;top:8px;right:9px;width:28px;height:28px;min-height:28px;padding:0;border-radius:10px;border:1px solid rgba(180,35,24,.22);background:var(--danger-bg);color:var(--danger);font-size:16px;line-height:1}
 body.dark .adaptive-field-card{background:rgba(16,24,39,.58);border-color:#2d3a50}

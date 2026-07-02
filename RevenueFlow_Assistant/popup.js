@@ -2703,7 +2703,7 @@ function collectCustomFields() {
   return cleanCustomFields(Array.from(el.customFieldsList.querySelectorAll("[data-custom-field-card]")).map((row) => ({
     name: row.querySelector("[data-custom-name]")?.value || "",
     value: row.querySelector("[data-custom-value]")?.value || "",
-    writeToSheet: row.querySelector("[data-custom-write]")?.checked === true
+    writeToSheet: row.querySelector("[data-custom-write]")?.dataset.state !== "off"
   })));
 }
 
@@ -2714,10 +2714,7 @@ function renderCustomFields(fields = []) {
   el.customFieldsList.innerHTML = rows.map((field, index) => `
     <label class="adaptive-field-card" data-custom-field-card data-index="${index}">
       <input data-custom-name class="adaptive-field-name" value="${escapeHtml(customFieldDisplayName(field.name))}" placeholder="${escapeHtml(t("customFieldNamePlaceholder"))}">
-      <label class="field-write-toggle adaptive-field-write" data-state="${field.writeToSheet ? "on" : "off"}">
-        <input data-custom-write type="checkbox" ${field.writeToSheet ? "checked" : ""}>
-        <span>${escapeHtml(field.writeToSheet ? t("sheetFieldWriteOn") : t("sheetFieldWriteOff"))}</span>
-      </label>
+      <button class="field-write-toggle adaptive-field-write" type="button" data-custom-write data-state="${field.writeToSheet ? "on" : "off"}">${escapeHtml(field.writeToSheet ? t("sheetFieldWriteOn") : t("sheetFieldWriteOff"))}</button>
       <input data-custom-value value="${escapeHtml(field.value)}" placeholder="${escapeHtml(t("customFieldValuePlaceholder"))}">
       <button type="button" class="custom-field-remove" data-index="${index}">×</button>
     </label>
@@ -5896,20 +5893,19 @@ if (el.customFieldsList) {
     updateRow();
   });
   el.customFieldsList.addEventListener("change", (event) => {
-    const checkbox = event.target.closest("[data-custom-write]");
-    if (!checkbox) return;
-    const toggle = checkbox.closest(".adaptive-field-write");
-    if (toggle) {
-      toggle.dataset.state = checkbox.checked ? "on" : "off";
-      const label = toggle.querySelector("span");
-      if (label) label.textContent = checkbox.checked ? t("sheetFieldWriteOn") : t("sheetFieldWriteOff");
-    }
-    const d = records[activeIndex] || {};
-    d.customFields = collectCustomFields();
-    records[activeIndex] = d;
-    updateRow();
+    if (!event.target.closest("[data-custom-name], [data-custom-value]")) return;
   });
   el.customFieldsList.addEventListener("click", (event) => {
+    const writeButton = event.target.closest("[data-custom-write]");
+    if (writeButton) {
+      writeButton.dataset.state = writeButton.dataset.state === "off" ? "on" : "off";
+      writeButton.textContent = writeButton.dataset.state === "off" ? t("sheetFieldWriteOff") : t("sheetFieldWriteOn");
+      const d = records[activeIndex] || {};
+      d.customFields = collectCustomFields();
+      records[activeIndex] = d;
+      updateRow();
+      return;
+    }
     const button = event.target.closest(".custom-field-remove");
     if (!button) return;
     const index = Number(button.dataset.index);
