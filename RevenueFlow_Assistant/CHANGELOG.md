@@ -1,5 +1,12 @@
 # RevenueFlow Assistant Changelog
 
+## v6.17.0 - Rate In Payment Review
+
+- Updated the package version to `6.17.0`.
+- Moved the live USD/VND exchange-rate strip into the main `Review payment` section.
+- Kept the one-click live rate refresh next to the fields users review before saving.
+- Kept the global build focused on Gmail OAuth, varied payment email parsing, and Google Sheets review/write flow.
+
 ## v6.16.0 - Persistent One-Time Guidance
 
 - Updated the package version to `6.16.0`.

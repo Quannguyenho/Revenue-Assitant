@@ -79,7 +79,7 @@ function serializePaymentSourceRules(rules) {
 }
 
 const defaultConfig = {
-  configVersion: "6.16.0",
+  configVersion: "6.17.0",
   rate: 26124,
   rateInfo: null,
   product: "",

@@ -241,6 +241,7 @@ body.dark .guided-setup-card[data-state="missing"]{background:linear-gradient(13
 .live-rate-strip small{display:block;margin:0 0 2px;color:var(--muted);font-weight:700}
 .live-rate-strip strong{display:inline-block;margin-right:8px;font-size:14px}
 .live-rate-strip button{flex-shrink:0;min-height:34px;padding:7px 11px;border-radius:10px}
+.review-rate-strip{margin:0 0 10px}
 .live-rate-status{font-size:11px;font-weight:800;color:var(--muted)}
 .live-rate-status[data-state="live"]{color:#047857}
 .live-rate-status[data-state="manual"]{color:#b45309}
@@ -2778,6 +2779,7 @@ body.ux-v23.compact-ui{
 .compact-ui .gmail-account-bar strong{font-size:12px;word-break:break-word}
 .compact-ui .gmail-account-bar button{min-height:34px;padding:7px 10px;border-radius:10px}
 .compact-ui .live-rate-strip{margin:8px 0;padding:8px 10px;border-radius:10px}
+.compact-ui .review-rate-strip{margin:0 0 8px}
 .compact-ui .live-rate-strip strong{font-size:13px}
 .compact-ui .live-rate-strip button{min-height:32px;padding:6px 9px}
 
