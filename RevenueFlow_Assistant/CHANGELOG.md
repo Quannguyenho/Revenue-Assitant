@@ -1,5 +1,12 @@
 # RevenueFlow Assistant Changelog
 
+## v6.16.0 - Persistent One-Time Guidance
+
+- Updated the package version to `6.16.0`.
+- Made the final ready guidance card dismiss permanently after the user clicks `Got it` / `Đã hiểu`.
+- Persisted `Don't show again` choices immediately for product-rule and Sheet setup tips.
+- Kept required setup guidance visible when Gmail or Google Sheet is genuinely missing.
+
 ## v6.15.0 - Adaptive Details Inside Review Grid
 
 - Updated the package version to `6.15.0`.

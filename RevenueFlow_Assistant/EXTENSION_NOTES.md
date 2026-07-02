@@ -6,7 +6,7 @@ This file records product and implementation decisions for the global Chrome ext
 
 - Global source folder: `D:\Q project\RevenueFlow_Assistant_v2_3_0_Best_UX`
 - Global package: `D:\Q project\RevenueFlow_Assistant_Latest.zip`
-- Current global release: `v6.15.0`
+- Current global release: `v6.16.0`
 - Netbase accounting-specific work belongs only in `D:\Q project\RevenueFlow_Assistant_Netbase_Local`.
 
 ## Product Direction
@@ -77,6 +77,12 @@ This file records product and implementation decisions for the global Chrome ext
 - Create versioned ZIP archives only when explicitly requested.
 
 ## Current Release Note
+
+### v6.16.0
+
+- Final ready guidance now stays dismissed after the user clicks `Got it` / `Đã hiểu`.
+- Product-rule and Sheet setup `Don't show again` choices are saved immediately.
+- Required setup cards still appear when Gmail or Sheet setup is incomplete.
 
 ### v6.15.0
 

@@ -79,7 +79,7 @@ function serializePaymentSourceRules(rules) {
 }
 
 const defaultConfig = {
-  configVersion: "6.15.0",
+  configVersion: "6.16.0",
   rate: 26124,
   rateInfo: null,
   product: "",
@@ -1516,6 +1516,10 @@ function renderGuidedSetup(state = {}) {
   const hasGmail = state.hasGmail ?? hasConnectedPaymentSource();
   const hasSheet = state.hasSheet ?? Boolean(spreadsheetIdFromUrl(el.sheetUrl && el.sheetUrl.value));
   const hasPayments = state.hasPayments ?? Boolean(records.length || bridgeQueueRecords.length);
+  if (hasGmail && hasSheet && hasPayments && tipDismissed("guidedSetupReady")) {
+    el.guidedSetupCard.hidden = true;
+    return;
+  }
   let model;
   if (!hasGmail) {
     model = { step: "1/3", title: t("guidedGmailTitle"), help: t("guidedGmailHelp"), action: t("quickFixConnectGmail"), kind: "connect-gmail", state: "missing" };
@@ -1565,6 +1569,8 @@ async function runSetupAction(action) {
   } else if (action === "scan") {
     await startPaymentWorkflow();
   } else if (action === "dismiss" && el.guidedSetupCard) {
+    setTipDismissed("guidedSetupReady", true);
+    await saveConfig();
     el.guidedSetupCard.hidden = true;
   }
 }
@@ -5863,12 +5869,14 @@ if (el.dismissProductRuleTip) el.dismissProductRuleTip.addEventListener("change"
   if (event.target.checked) {
     setTipDismissed("productRules", true);
     renderSmartSuggestions();
+    saveConfig();
   }
 });
 if (el.dismissSheetTip) el.dismissSheetTip.addEventListener("change", (event) => {
   if (event.target.checked) {
     setTipDismissed("sheetSettings", true);
     renderSmartSuggestions();
+    saveConfig();
   }
 });
 if (el.quickProductName) el.quickProductName.addEventListener("focus", maybeShowProductTip);
