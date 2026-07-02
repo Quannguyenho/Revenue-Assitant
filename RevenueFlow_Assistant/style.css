@@ -1037,6 +1037,7 @@ body.dark .ux-v23 .section.ux-card-panel, body.dark .ux-accordion{background:rgb
 .ux-v23 .payment-inbox-table td,.ux-v23 .payment-inbox-table th{padding:11px 9px}
 .ux-v23 .payment-inbox-row:hover{background:var(--primary-soft);box-shadow:inset 4px 0 0 var(--primary)}
 .ux-form-grid label,.ux-product-field{
+  position:relative;
   padding:11px;
   border:1px solid rgba(217,228,240,.78);
   border-radius:18px;
@@ -1046,6 +1047,12 @@ body.dark .ux-v23 .section.ux-card-panel, body.dark .ux-accordion{background:rgb
 body.dark .ux-form-grid label, body.dark .ux-product-field{background:rgba(16,24,39,.58);border-color:#2d3a50}
 .ux-form-grid label{margin-top:0}
 .ux-product-field{margin-top:10px}
+.field-write-toggle{position:absolute;top:9px;right:10px;min-height:24px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-size:10px;font-weight:850;box-shadow:none}
+.field-write-toggle[data-state="on"]{border-color:rgba(4,120,87,.28);background:#dcfce7;color:#047857}
+.field-write-toggle[data-state="off"]{border-color:rgba(180,35,24,.20);background:#fff5f4;color:#b42318}
+body.dark .field-write-toggle[data-state="on"]{background:rgba(22,101,52,.28);color:#86efac}
+body.dark .field-write-toggle[data-state="off"]{background:rgba(127,29,29,.24);color:#fca5a5}
+.ux-form-grid label:has(.field-write-toggle)>span,.ux-product-field:has(.field-write-toggle)>span{max-width:calc(100% - 74px);padding-right:62px}
 .ux-v23 input,.ux-v23 select,.ux-v23 textarea{
   min-height:42px;
   border-radius:15px;

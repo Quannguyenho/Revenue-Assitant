@@ -79,7 +79,7 @@ function serializePaymentSourceRules(rules) {
 }
 
 const defaultConfig = {
-  configVersion: "6.13.0",
+  configVersion: "6.14.0",
   rate: 26124,
   rateInfo: null,
   product: "",
@@ -361,6 +361,8 @@ const labels = {
     customFieldsCount: "{count} chi tiết",
     customFieldWriteOn: "Ghi Sheet",
     customFieldWriteOff: "Không ghi",
+    sheetFieldWriteOn: "Ghi",
+    sheetFieldWriteOff: "Không ghi",
     customFieldNamePlaceholder: "Tên mục",
     customFieldValuePlaceholder: "Giá trị",
     accountingHandoffTitle: "Dữ liệu cho app kế toán",
@@ -881,6 +883,8 @@ const labels = {
     customFieldsCount: "{count} details",
     customFieldWriteOn: "Write",
     customFieldWriteOff: "Skip",
+    sheetFieldWriteOn: "Write",
+    sheetFieldWriteOff: "Skip",
     customFieldNamePlaceholder: "Field name",
     customFieldValuePlaceholder: "Value",
     accountingHandoffTitle: "Accounting app data",
@@ -2249,19 +2253,32 @@ function sheetFieldLabelKey(key) {
   }[key] || key;
 }
 
+function sheetFieldWritesFor(record = {}) {
+  return { ...(record.sheetFieldWrites || {}) };
+}
+
+function sheetFieldWriteEnabled(record, key) {
+  const writes = sheetFieldWritesFor(record);
+  return writes[key] !== false;
+}
+
+function sheetFieldValue(record, key, value) {
+  return sheetFieldWriteEnabled(record, key) ? value : "";
+}
+
 function sheetFieldDefinitions(d, invoiceNoOverride, invoiceDateOverride) {
   const rate = moneyNumber(el.rate.value);
   const a = accounting(d);
   const invoiceNo = invoiceNoOverride ?? el.invoiceNo.value.trim();
   const invoiceDate = invoiceDateOverride ?? el.invoiceDate.value.trim();
   return [
-    { key: "date", value: d.date || "" },
-    { key: "customerName", value: d.customerName || "" },
-    { key: "orderNo", value: d.orderNo || "" },
-    { key: "product", value: d.product || "" },
-    { key: "usd", value: d.usd || "" },
+    { key: "date", value: sheetFieldValue(d, "date", d.date || "") },
+    { key: "customerName", value: sheetFieldValue(d, "customerName", d.customerName || "") },
+    { key: "orderNo", value: sheetFieldValue(d, "orderNo", d.orderNo || "") },
+    { key: "product", value: sheetFieldValue(d, "product", d.product || "") },
+    { key: "usd", value: sheetFieldValue(d, "usd", d.usd || "") },
     { key: "provider", value: d.note || d.provider || "Payment" },
-    { key: "grossVnd", value: vnd(a.grossVnd) },
+    { key: "grossVnd", value: sheetFieldValue(d, "usd", vnd(a.grossVnd)) },
     { key: "rate", value: rate || "" },
     { key: "invoiceNo", value: invoiceNo },
     { key: "invoiceDate", value: invoiceDate }
@@ -2639,6 +2656,29 @@ function makeAllRows() {
   }).join("\n");
 }
 
+function collectSheetFieldWrites(existing = {}) {
+  const writes = { ...existing };
+  document.querySelectorAll("[data-write-field]").forEach((button) => {
+    const key = button.dataset.writeField;
+    if (!key) return;
+    writes[key] = button.dataset.state !== "off";
+  });
+  return writes;
+}
+
+function renderSheetFieldWriteToggles(record = {}) {
+  const writes = sheetFieldWritesFor(record);
+  document.querySelectorAll("[data-write-field]").forEach((button) => {
+    const key = button.dataset.writeField;
+    const enabled = writes[key] !== false;
+    button.dataset.state = enabled ? "on" : "off";
+    button.textContent = enabled ? t("sheetFieldWriteOn") : t("sheetFieldWriteOff");
+    button.title = enabled
+      ? (config.language === "en" ? "This field will be written to Google Sheets." : "Trường này sẽ được ghi vào Google Sheet.")
+      : (config.language === "en" ? "This field stays visible here but will not be written." : "Trường này vẫn hiện ở đây nhưng không ghi vào Sheet.");
+  });
+}
+
 function formData() {
   const d = records[activeIndex] || {};
   Object.keys(el.fields).forEach((key) => {
@@ -2652,6 +2692,7 @@ function formData() {
     d.manualRevenueOverride = el.shouldWriteRevenue.checked && !["Paid", "Refund"].includes(d.status);
   }
   d.confidence = d.confidence || {};
+  d.sheetFieldWrites = collectSheetFieldWrites(d.sheetFieldWrites);
   d.customFields = collectCustomFields();
   records[activeIndex] = d;
   return d;
@@ -2723,6 +2764,7 @@ function renderForm(d = {}) {
       ? t("canWriteAfterReview")
       : t("notSuccessfulPaymentReason"));
   }
+  renderSheetFieldWriteToggles(d);
   renderCustomFields(d.customFields || []);
   renderCustomFieldsSheetControls();
   renderConfidence(d);
@@ -6275,6 +6317,16 @@ Object.values(el.fields).forEach((input) => input.addEventListener("input", upda
 [el.product, el.rate, el.invoiceNo, el.invoiceDate, el.vatPercent, el.paypalFeePercent, el.appendAccounting, el.accountingPreset, el.accountingConnector].filter(Boolean).forEach((input) => {
   input.addEventListener("input", updateRow);
   input.addEventListener("change", updateRow);
+});
+document.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-write-field]");
+  if (!button) return;
+  const key = button.dataset.writeField;
+  const d = records[activeIndex] || {};
+  d.sheetFieldWrites = { ...(d.sheetFieldWrites || {}), [key]: button.dataset.state === "off" };
+  records[activeIndex] = d;
+  renderSheetFieldWriteToggles(d);
+  updateRow();
 });
 if (el.rate) el.rate.addEventListener("input", markManualRateEdited);
 [el.autoCopy, el.strictValidation, el.autoIncrementInvoice, el.autoWriteSheet, el.enableEmailBridge].forEach((input) => input.addEventListener("change", scheduleSaveConfig));

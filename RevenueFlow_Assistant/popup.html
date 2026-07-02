@@ -217,16 +217,17 @@
     <div class="form-grid ux-form-grid">
       <label><span data-i18n="dateLabel"></span><input id="fieldDate" data-field="date" data-placeholder-i18n="datePlaceholder"></label>
       <label><span data-i18n="emailTypeLabel"></span><input id="fieldType" data-field="type" data-placeholder-i18n="emailTypePlaceholder"></label>
-      <label><span data-i18n="customerLabel"></span><input id="fieldCustomerName" data-field="customerName"></label>
-      <label><span data-i18n="emailLabel"></span><input id="fieldCustomerEmail" data-field="customerEmail"></label>
-      <label><span data-i18n="referenceLabel"></span><input id="fieldOrderNo" data-field="orderNo"></label>
-      <label><span data-i18n="usdLabel"></span><input id="fieldUsd" data-field="usd" type="number" step="0.01"></label>
+      <label><span data-i18n="customerLabel"></span><button class="field-write-toggle" type="button" data-write-field="customerName"></button><input id="fieldCustomerName" data-field="customerName"></label>
+      <label><span data-i18n="emailLabel"></span><button class="field-write-toggle" type="button" data-write-field="customerEmail"></button><input id="fieldCustomerEmail" data-field="customerEmail"></label>
+      <label><span data-i18n="referenceLabel"></span><button class="field-write-toggle" type="button" data-write-field="orderNo"></button><input id="fieldOrderNo" data-field="orderNo"></label>
+      <label><span data-i18n="usdLabel"></span><button class="field-write-toggle" type="button" data-write-field="usd"></button><input id="fieldUsd" data-field="usd" type="number" step="0.01"></label>
       <label><span data-i18n="transactionLabel"></span><input id="fieldTransactionId" data-field="transactionId"></label>
       <label><span data-i18n="profileLabel"></span><input id="fieldProfileId" data-field="profileId"></label>
     </div>
 
     <div class="ux-product-field">
       <span data-i18n="productLabel"></span>
+      <button class="field-write-toggle" type="button" data-write-field="product"></button>
       <div class="product-select-row">
         <select id="product"></select>
         <button id="quickAddProductInline" class="icon-mini primary-mini" type="button" data-title-i18n="addProduct" aria-label="Add product">+</button>

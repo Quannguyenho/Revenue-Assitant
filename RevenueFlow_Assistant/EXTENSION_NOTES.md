@@ -6,7 +6,7 @@ This file records product and implementation decisions for the global Chrome ext
 
 - Global source folder: `D:\Q project\RevenueFlow_Assistant_v2_3_0_Best_UX`
 - Global package: `D:\Q project\RevenueFlow_Assistant_Latest.zip`
-- Current global release: `v6.13.0`
+- Current global release: `v6.14.0`
 - Netbase accounting-specific work belongs only in `D:\Q project\RevenueFlow_Assistant_Netbase_Local`.
 
 ## Product Direction
@@ -77,6 +77,12 @@ This file records product and implementation decisions for the global Chrome ext
 - Create versioned ZIP archives only when explicitly requested.
 
 ## Current Release Note
+
+### v6.14.0
+
+- Main review fields now have inline `Write` / `Skip` controls inside the `Review payment` cards.
+- Users can review a detected field without writing that field to Google Sheets.
+- Sheet preview and Sheet write respect the inline field write state.
 
 ### v6.13.0
 

@@ -1,5 +1,13 @@
 # RevenueFlow Assistant Changelog
 
+## v6.14.0 - Inline Review Field Write Toggles
+
+- Updated the package version to `6.14.0`.
+- Added `Write` / `Skip` controls directly inside the main `Review payment` field cards.
+- Customers can now keep a detected value visible for review while preventing that field from being written to Google Sheets.
+- Sheet row generation now respects the inline write state for customer, email, reference, USD/VND, and product fields.
+- Kept the global Gmail OAuth + Google Sheets workflow unchanged.
+
 ## v6.13.0 - Compact Detail Write Controls
 
 - Updated the package version to `6.13.0`.
