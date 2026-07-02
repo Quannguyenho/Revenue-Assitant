@@ -79,7 +79,7 @@ function serializePaymentSourceRules(rules) {
 }
 
 const defaultConfig = {
-  configVersion: "6.11.0",
+  configVersion: "6.12.0",
   rate: 26124,
   rateInfo: null,
   product: "",
@@ -338,7 +338,7 @@ const labels = {
     emailTypeLabel: "Loại email",
     customerLabel: "Khách hàng",
     emailLabel: "Email",
-    referenceLabel: "Order / Mã recurring",
+    referenceLabel: "Đơn hàng / Tham chiếu",
     usdLabel: "USD",
     transactionLabel: "Transaction ID",
     profileLabel: "Profile ID",
@@ -353,11 +353,13 @@ const labels = {
     productAmountLabel: "USD (không bắt buộc)",
     productNameLabel: "Tên sản phẩm / dịch vụ",
     productAdded: "Đã thêm mục sản phẩm/dịch vụ.",
-    customFieldsTitle: "Thông tin thêm",
-    writeCustomFieldsLabel: "Ghi vào Sheet",
+    customFieldsTitle: "Chi tiết email",
+    writeCustomFieldsLabel: "Ghi chi tiết đã chọn",
     customFieldsSheetColumnLabel: "Cột",
-    customFieldsSheetColumnHelp: "Thông tin thêm sẽ ghi vào cùng dòng, tại cột đã chọn.",
-    addCustomFieldTitle: "Thêm thông tin",
+    customFieldsSheetColumnHelp: "Chỉ các chi tiết được bật Ghi Sheet mới ghi vào cột này.",
+    addCustomFieldTitle: "Thêm chi tiết",
+    customFieldWriteOn: "Ghi Sheet",
+    customFieldWriteOff: "Không ghi",
     customFieldNamePlaceholder: "Tên mục",
     customFieldValuePlaceholder: "Giá trị",
     accountingHandoffTitle: "Dữ liệu cho app kế toán",
@@ -855,7 +857,7 @@ const labels = {
     emailTypeLabel: "Email type",
     customerLabel: "Customer",
     emailLabel: "Email",
-    referenceLabel: "Order / Recurring ref",
+    referenceLabel: "Order / Reference",
     usdLabel: "USD",
     transactionLabel: "Transaction ID",
     profileLabel: "Profile ID",
@@ -870,11 +872,13 @@ const labels = {
     productAmountLabel: "USD (optional)",
     productNameLabel: "Product / service name",
     productAdded: "Product/service item added.",
-    customFieldsTitle: "More details",
-    writeCustomFieldsLabel: "Write to Sheet",
+    customFieldsTitle: "Email details",
+    writeCustomFieldsLabel: "Write selected details",
     customFieldsSheetColumnLabel: "Column",
-    customFieldsSheetColumnHelp: "More details are written on the same row in the selected column.",
+    customFieldsSheetColumnHelp: "Only details marked Write to Sheet are written into this column.",
     addCustomFieldTitle: "Add detail",
+    customFieldWriteOn: "Write",
+    customFieldWriteOff: "Skip",
     customFieldNamePlaceholder: "Field name",
     customFieldValuePlaceholder: "Value",
     accountingHandoffTitle: "Accounting app data",
@@ -2149,7 +2153,8 @@ function cleanCustomFields(fields = []) {
   return (Array.isArray(fields) ? fields : [])
     .map((field) => ({
       name: String(field && field.name || "").trim(),
-      value: String(field && field.value || "").trim()
+      value: String(field && field.value || "").trim(),
+      writeToSheet: field && field.writeToSheet === true
     }))
     .filter((field) => field.name || field.value);
 }
@@ -2166,14 +2171,31 @@ function customFieldDisplayName(name) {
     "trial period amount": "Số tiền giai đoạn dùng thử",
     "start date": "Ngày bắt đầu",
     "end date": "Ngày kết thúc",
+    "receipt number": "Mã biên nhận",
+    "invoice number": "Số hóa đơn",
+    "payment method": "Phương thức thanh toán",
+    "billing period": "Kỳ thanh toán",
+    "plan": "Gói dịch vụ",
+    "item": "Sản phẩm",
+    "quantity": "Số lượng",
+    "sku": "SKU",
+    "subtotal": "Tạm tính",
+    "tax": "Thuế",
+    "discount": "Giảm giá",
+    "shipping": "Phí vận chuyển",
+    "fee": "Phí",
+    "net amount": "Số tiền thực nhận",
+    "card": "Thẻ",
     "source": "Nguồn",
     "detail": "Chi tiết"
   };
   return viMap[key] || raw || "Chi tiết";
 }
 
-function customFieldsText(fields = []) {
+function customFieldsText(fields = [], options = {}) {
+  const onlyWritable = options.onlyWritable === true;
   return cleanCustomFields(fields)
+    .filter((field) => !onlyWritable || field.writeToSheet === true)
     .map((field) => `${customFieldDisplayName(field.name)}: ${field.value}`)
     .join("; ");
 }
@@ -2277,7 +2299,7 @@ function buildSheetRowParts(d, invoiceNoOverride, invoiceDateOverride) {
     placeSheetField(row, preview, start, columns[field.key], index, t(field.labelKey), field.value, warnings, field.key);
   });
 
-  const detailText = customFieldsText(d.customFields);
+  const detailText = customFieldsText(d.customFields, { onlyWritable: true });
   if (detailText && el.writeCustomFields && el.writeCustomFields.checked) {
     const fallbackOrder = Math.max(row.length, SHEET_FIELD_KEYS.length);
     placeSheetField(row, preview, start, el.customFieldsSheetColumn && el.customFieldsSheetColumn.value, fallbackOrder, t("customFieldsTitle"), detailText, warnings, "customFields");
@@ -2317,6 +2339,18 @@ function applyCustomFieldsToSheetRow(base, detailText) {
 
 function autoCustomFieldsFromText(text) {
   const value = normalizeText(text || "");
+  const fields = [];
+  const seen = new Set();
+  function add(name, rawValue, options = {}) {
+    const cleanName = String(name || "").trim();
+    const cleanValue = String(rawValue || "").replace(/\s+/g, " ").trim();
+    if (!cleanName || !cleanValue) return;
+    if (cleanValue.length > 160) return;
+    const key = `${plainKey(cleanName)}=${plainKey(cleanValue)}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    fields.push({ name: cleanName, value: cleanValue, writeToSheet: options.writeToSheet === true });
+  }
   const specs = [
     ["Outstanding balance", /Outstanding balance\s*\n?\s*([^\n]+)/i],
     ["Amount paid each time", /Amount paid each time\s*\n?\s*([^\n]+)/i],
@@ -2324,12 +2358,38 @@ function autoCustomFieldsFromText(text) {
     ["Next payment due", /Next payment due\s*\n?\s*([^\n]+)/i],
     ["Trial period amount", /Trial period amount\s*\n?\s*([^\n]+)/i],
     ["Start date", /Start date\s*\n?\s*([^\n]+)/i],
-    ["End date", /End date\s*\n?\s*([^\n]+)/i]
+    ["End date", /End date\s*\n?\s*([^\n]+)/i],
+    ["Receipt number", /Receipt (?:number|#)\s*:?\s*([^\n]+)/i],
+    ["Invoice number", /Invoice (?:number|#|ID)?\s*:?\s*([^\n]+)/i],
+    ["Payment method", /Payment method\s*:?\s*([^\n]+)/i],
+    ["Billing period", /Billing period\s*:?\s*([^\n]+)/i],
+    ["Plan", /(?:Plan|Package)\s*:?\s*([^\n]+)/i],
+    ["Item", /(?:Item|Product|Description|Service)\s*:?\s*([^\n]+)/i],
+    ["Quantity", /(?:Quantity|Qty)\s*:?\s*([^\n]+)/i],
+    ["SKU", /SKU\s*:?\s*([^\n]+)/i],
+    ["Subtotal", /Subtotal\s*:?\s*([$€£]?\s*[0-9][0-9,.]*\s*[A-Z]{0,3})/i],
+    ["Tax", /(?:Tax|VAT)\s*:?\s*([$€£]?\s*[0-9][0-9,.]*\s*[A-Z]{0,3})/i],
+    ["Discount", /Discount\s*:?\s*([^\n]+)/i],
+    ["Shipping", /Shipping\s*:?\s*([$€£]?\s*[0-9][0-9,.]*\s*[A-Z]{0,3})/i],
+    ["Fee", /(?:Fee|Processing fee|PayPal fee)\s*:?\s*([$€£]?\s*-?[0-9][0-9,.]*\s*[A-Z]{0,3})/i],
+    ["Net amount", /(?:Net amount|Net)\s*:?\s*([$€£]?\s*-?[0-9][0-9,.]*\s*[A-Z]{0,3})/i],
+    ["Card", /(?:Card|Payment card)\s*:?\s*([^\n]+)/i]
   ];
-  return specs.map(([name, regex]) => {
+  specs.forEach(([name, regex]) => {
     const match = value.match(regex);
-    return match && match[1] ? { name, value: match[1].trim() } : null;
-  }).filter(Boolean);
+    if (match && match[1]) add(name, match[1]);
+  });
+  const genericLabels = [
+    "Receipt number", "Invoice number", "Payment method", "Billing period", "Plan", "Package",
+    "Item", "Product", "Description", "Service", "Quantity", "Qty", "SKU", "Subtotal",
+    "Tax", "VAT", "Discount", "Shipping", "Fee", "Processing fee", "Net amount",
+    "Card", "Payment card", "Payer ID", "Customer ID", "Order status", "Payment status"
+  ];
+  const genericPattern = new RegExp(`(?:^|\\n)\\s*(${genericLabels.map((label) => label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\s*:?\\s*\\n?\\s*([^\\n]+)`, "gi");
+  for (const match of value.matchAll(genericPattern)) {
+    add(match[1], match[2]);
+  }
+  return fields.slice(0, 16);
 }
 
 function makeRow(d, invoiceNoOverride, invoiceDateOverride) {
@@ -2598,20 +2658,22 @@ function collectCustomFields() {
   if (!el.customFieldsList) return cleanCustomFields(records[activeIndex] && records[activeIndex].customFields);
   return cleanCustomFields(Array.from(el.customFieldsList.querySelectorAll(".custom-field-row")).map((row) => ({
     name: row.querySelector("[data-custom-name]")?.value || "",
-    value: row.querySelector("[data-custom-value]")?.value || ""
+    value: row.querySelector("[data-custom-value]")?.value || "",
+    writeToSheet: row.querySelector("[data-custom-write]")?.checked === true
   })));
 }
 
 function renderCustomFields(fields = []) {
   if (!el.customFieldsList) return;
-  const rows = (Array.isArray(fields) ? fields : []).map((field) => ({
-    name: String(field && field.name || "").trim(),
-    value: String(field && field.value || "").trim()
-  }));
+  const rows = cleanCustomFields(fields);
   el.customFieldsList.innerHTML = rows.map((field, index) => `
     <div class="custom-field-row" data-index="${index}">
       <input data-custom-name value="${escapeHtml(customFieldDisplayName(field.name))}" placeholder="${escapeHtml(t("customFieldNamePlaceholder"))}">
       <input data-custom-value value="${escapeHtml(field.value)}" placeholder="${escapeHtml(t("customFieldValuePlaceholder"))}">
+      <label class="custom-field-write-toggle" data-state="${field.writeToSheet ? "on" : "off"}">
+        <input data-custom-write type="checkbox" ${field.writeToSheet ? "checked" : ""}>
+        <span>${escapeHtml(field.writeToSheet ? t("customFieldWriteOn") : t("customFieldWriteOff"))}</span>
+      </label>
       <button type="button" class="custom-field-remove" data-index="${index}">×</button>
     </div>
   `).join("");
@@ -3348,6 +3410,7 @@ function parsePaymentEmail(text, metadata = {}) {
   parsed.type = parsed.emailType;
   parsed.usd = parsed.usd || parsed.amount || "";
   parsed.amount = parsed.amount || parsed.usd || "";
+  parsed.customFields = cleanCustomFields([...(parsed.customFields || []), ...autoCustomFieldsFromText(text)]);
   const resolvedProduct = resolveProductName({ emailProduct: parsed.product, amount: parsed.usd, text });
   parsed.product = resolvedProduct.value;
   parsed.note = parsed.provider === "Unknown" ? "Payment" : parsed.provider;
@@ -3494,6 +3557,7 @@ function parsedGmailPaymentToBridgeRecord(message, parsed, rawText) {
     subscriptionId: parsed.subscriptionId || "",
     nextPaymentDate: parsed.nextPaymentDate || "",
     currency: parsed.currency || "USD",
+    customFields: cleanCustomFields(parsed.customFields || autoCustomFieldsFromText(rawText)),
     paymentType: parsed.type || `${parsed.provider || "Payment"} email`,
     product: product || "Need Review - Product not detected",
     needReview: reviewReasons.length > 0,
@@ -5773,12 +5837,26 @@ if (el.product) el.product.addEventListener("change", () => {
 if (el.customProductName) el.customProductName.addEventListener("input", updateRow);
 if (el.addCustomField) el.addCustomField.addEventListener("click", () => {
   const d = formData();
-  d.customFields = [...cleanCustomFields(d.customFields || []), { name: "", value: "" }];
+  d.customFields = [...cleanCustomFields(d.customFields || []), { name: "", value: "", writeToSheet: true }];
   records[activeIndex] = d;
   renderCustomFields(d.customFields);
 });
 if (el.customFieldsList) {
   el.customFieldsList.addEventListener("input", () => {
+    const d = records[activeIndex] || {};
+    d.customFields = collectCustomFields();
+    records[activeIndex] = d;
+    updateRow();
+  });
+  el.customFieldsList.addEventListener("change", (event) => {
+    const checkbox = event.target.closest("[data-custom-write]");
+    if (!checkbox) return;
+    const toggle = checkbox.closest(".custom-field-write-toggle");
+    if (toggle) {
+      toggle.dataset.state = checkbox.checked ? "on" : "off";
+      const label = toggle.querySelector("span");
+      if (label) label.textContent = checkbox.checked ? t("customFieldWriteOn") : t("customFieldWriteOff");
+    }
     const d = records[activeIndex] || {};
     d.customFields = collectCustomFields();
     records[activeIndex] = d;

@@ -1,5 +1,14 @@
 # RevenueFlow Assistant Changelog
 
+## v6.12.0 - Adaptive Email Details Review
+
+- Updated the package version to `6.12.0`.
+- Kept the global source focused on Gmail OAuth and Google Sheets; no mail-host/local connector permissions were added.
+- Renamed review wording to global terms such as `Order / Reference` and `Email details`.
+- Expanded automatic detail extraction for varied payment emails, including receipt, invoice, payment method, plan, item, tax, discount, fee, net amount, and shipping labels.
+- Changed extra details from one all-or-nothing Sheet checkbox to per-detail `Write` / `Skip` controls.
+- Sheet rows now include only the email details the user explicitly marks for writing.
+
 ## v6.11.0 - Visible Auto Rate Guard
 
 - Updated the package version to `6.11.0`.

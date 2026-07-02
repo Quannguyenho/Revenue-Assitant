@@ -6,7 +6,7 @@ This file records product and implementation decisions for the global Chrome ext
 
 - Global source folder: `D:\Q project\RevenueFlow_Assistant_v2_3_0_Best_UX`
 - Global package: `D:\Q project\RevenueFlow_Assistant_Latest.zip`
-- Current global release: `v6.11.0`
+- Current global release: `v6.12.0`
 - Netbase accounting-specific work belongs only in `D:\Q project\RevenueFlow_Assistant_Netbase_Local`.
 
 ## Product Direction
@@ -77,6 +77,13 @@ This file records product and implementation decisions for the global Chrome ext
 - Create versioned ZIP archives only when explicitly requested.
 
 ## Current Release Note
+
+### v6.12.0
+
+- Global review form now uses neutral `Order / Reference` and `Email details` wording.
+- Gmail-scanned payment emails can surface more provider-specific details for review without forcing them into the main Sheet columns.
+- Each email detail has its own `Write` / `Skip` control; only selected details are appended to the configured details column.
+- The public build remains Gmail OAuth + Google Sheets only and does not add mail-host/local connector permissions.
 
 ### v6.11.0
 
