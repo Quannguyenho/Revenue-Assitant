@@ -262,12 +262,15 @@
     </div>
     <div class="custom-fields-panel">
       <div class="custom-fields-head">
-        <span data-i18n="customFieldsTitle"></span>
-        <button id="addCustomField" class="icon-mini primary-mini" type="button" data-title-i18n="addCustomFieldTitle" aria-label="Add detail">+</button>
-      </div>
-      <div class="custom-fields-sheet-row">
-        <label class="check compact-check"><input id="writeCustomFields" type="checkbox"><span data-i18n="writeCustomFieldsLabel"></span></label>
-        <label><span data-i18n="customFieldsSheetColumnLabel"></span><input id="customFieldsSheetColumn" placeholder="L"></label>
+        <div>
+          <span data-i18n="customFieldsTitle"></span>
+          <small id="customFieldsCount"></small>
+        </div>
+        <div class="custom-fields-actions">
+          <input id="writeCustomFields" type="checkbox" hidden checked>
+          <label class="custom-fields-column"><span data-i18n="customFieldsSheetColumnLabel"></span><input id="customFieldsSheetColumn" placeholder="L"></label>
+          <button id="addCustomField" class="icon-mini primary-mini" type="button" data-title-i18n="addCustomFieldTitle" aria-label="Add detail">+</button>
+        </div>
       </div>
       <div id="customFieldsList" class="custom-fields-list"></div>
     </div>

@@ -6,7 +6,7 @@ This file records product and implementation decisions for the global Chrome ext
 
 - Global source folder: `D:\Q project\RevenueFlow_Assistant_v2_3_0_Best_UX`
 - Global package: `D:\Q project\RevenueFlow_Assistant_Latest.zip`
-- Current global release: `v6.12.0`
+- Current global release: `v6.13.0`
 - Netbase accounting-specific work belongs only in `D:\Q project\RevenueFlow_Assistant_Netbase_Local`.
 
 ## Product Direction
@@ -77,6 +77,12 @@ This file records product and implementation decisions for the global Chrome ext
 - Create versioned ZIP archives only when explicitly requested.
 
 ## Current Release Note
+
+### v6.13.0
+
+- Email detail write/skip controls now live inside compact cards in the payment review section.
+- The previous bulky detail checkbox row is hidden from the normal workflow.
+- Long extracted detail lists are bounded so the side panel stays easier to scan.
 
 ### v6.12.0
 

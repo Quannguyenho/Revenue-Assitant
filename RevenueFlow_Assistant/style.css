@@ -507,22 +507,23 @@ textarea.rules{height:110px}
 .product-select-row{display:grid;grid-template-columns:minmax(0,1fr) 36px;gap:8px;align-items:center}
 .product-select-row .icon-mini{width:36px;height:36px;min-height:36px}
 #customProductName{margin-top:8px;font-size:13px}
-.custom-fields-panel{margin-top:10px;padding:10px;border:1px dashed var(--line);border-radius:14px;background:var(--panel-2)}
-.custom-fields-head{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;font-weight:850;color:var(--muted)}
-.custom-fields-sheet-row{display:grid;grid-template-columns:minmax(0,1fr) 86px;gap:7px;align-items:end;margin-top:8px}
-.custom-fields-sheet-row label{min-width:0}
-.custom-fields-sheet-row .check{min-height:34px;padding:7px 8px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
-.custom-fields-sheet-row input[type="text"],.custom-fields-sheet-row input:not([type]){min-height:34px;font-size:12px;text-transform:uppercase}
-.custom-fields-sheet-row input:disabled{opacity:.55;cursor:not-allowed}
-.custom-fields-list{display:grid;gap:7px;margin-top:8px}
-.custom-field-row{display:grid;grid-template-columns:minmax(0,.78fr) minmax(0,1.12fr) 82px 32px;gap:7px;align-items:center}
-.custom-field-row input{min-height:34px;font-size:12px}
-.custom-field-write-toggle{display:flex;align-items:center;justify-content:center;min-height:32px;padding:0 7px;border:1px solid var(--line);border-radius:999px;background:var(--panel);font-size:10px;font-weight:850;color:var(--muted);cursor:pointer;user-select:none}
+.custom-fields-panel{margin-top:10px;padding:9px 10px;border:1px solid rgba(148,163,184,.28);border-radius:14px;background:var(--panel-2);box-shadow:var(--field-shadow)}
+.custom-fields-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;font-weight:850;color:var(--muted)}
+.custom-fields-head small{display:block;margin-top:1px;font-size:10px;color:var(--muted);font-weight:700}
+.custom-fields-actions{display:flex;align-items:center;gap:7px;flex:0 0 auto}
+.custom-fields-column{display:flex!important;align-items:center;gap:5px;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;background:transparent!important;color:var(--muted);font-size:10px;font-weight:800}
+.custom-fields-column span{margin:0!important;font-size:10px!important}
+.custom-fields-column input{width:48px;min-height:30px!important;padding:6px 7px!important;text-align:center;text-transform:uppercase;font-size:11px!important;border-radius:10px!important}
+.custom-fields-list{display:grid;gap:7px;margin-top:8px;max-height:190px;overflow:auto;padding-right:2px}
+.custom-field-row{display:grid;grid-template-columns:minmax(0,1fr) 30px;gap:7px;align-items:stretch}
+.custom-field-card{min-width:0;padding:8px;border:1px solid var(--line);border-radius:13px;background:var(--panel)}
+.custom-field-card-head{display:grid;grid-template-columns:minmax(0,1fr) 76px;gap:7px;align-items:center;margin-bottom:6px}
+.custom-field-row input{min-height:32px;font-size:12px;border-radius:11px}
+.custom-field-write-toggle{display:flex;align-items:center;justify-content:center;min-height:30px;padding:0 7px;border:1px solid var(--line);border-radius:999px;background:var(--panel-2);font-size:10px;font-weight:850;color:var(--muted);cursor:pointer;user-select:none;white-space:nowrap}
 .custom-field-write-toggle input{position:absolute;opacity:0;pointer-events:none}
 .custom-field-write-toggle[data-state="on"]{border-color:rgba(4,120,87,.28);background:#dcfce7;color:#047857}
 body.dark .custom-field-write-toggle[data-state="on"]{background:rgba(22,101,52,.28);color:#86efac}
-.custom-field-remove{width:32px;height:32px;min-height:32px;padding:0;border-radius:10px;border:1px solid rgba(180,35,24,.22);background:var(--danger-bg);color:var(--danger);font-size:18px;line-height:1}
-@media (max-width:480px){.custom-field-row{grid-template-columns:minmax(0,1fr) 32px}.custom-field-row input[data-custom-value],.custom-field-write-toggle{grid-column:1 / -1}.custom-field-remove{grid-row:1;grid-column:2}}
+.custom-field-remove{width:30px;height:30px;min-height:30px;padding:0;border-radius:10px;border:1px solid rgba(180,35,24,.22);background:var(--danger-bg);color:var(--danger);font-size:17px;line-height:1;align-self:start}
 .review-more-menu{display:grid;grid-template-columns:1fr;gap:6px;margin:-2px 0 10px auto;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2);max-width:230px}
 .review-more-menu[hidden]{display:none}
 .danger-outline{border-color:#fda29b;color:#b42318;background:#fff5f4}

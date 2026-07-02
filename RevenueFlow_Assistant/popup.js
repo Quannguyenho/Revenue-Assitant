@@ -79,7 +79,7 @@ function serializePaymentSourceRules(rules) {
 }
 
 const defaultConfig = {
-  configVersion: "6.12.0",
+  configVersion: "6.13.0",
   rate: 26124,
   rateInfo: null,
   product: "",
@@ -358,6 +358,7 @@ const labels = {
     customFieldsSheetColumnLabel: "Cột",
     customFieldsSheetColumnHelp: "Chỉ các chi tiết được bật Ghi Sheet mới ghi vào cột này.",
     addCustomFieldTitle: "Thêm chi tiết",
+    customFieldsCount: "{count} chi tiết",
     customFieldWriteOn: "Ghi Sheet",
     customFieldWriteOff: "Không ghi",
     customFieldNamePlaceholder: "Tên mục",
@@ -877,6 +878,7 @@ const labels = {
     customFieldsSheetColumnLabel: "Column",
     customFieldsSheetColumnHelp: "Only details marked Write to Sheet are written into this column.",
     addCustomFieldTitle: "Add detail",
+    customFieldsCount: "{count} details",
     customFieldWriteOn: "Write",
     customFieldWriteOff: "Skip",
     customFieldNamePlaceholder: "Field name",
@@ -1299,6 +1301,7 @@ const el = {
   reviewRevenueImpact: document.getElementById("reviewRevenueImpact"),
   addCustomField: document.getElementById("addCustomField"),
   customFieldsList: document.getElementById("customFieldsList"),
+  customFieldsCount: document.getElementById("customFieldsCount"),
   writeCustomFields: document.getElementById("writeCustomFields"),
   customFieldsSheetColumn: document.getElementById("customFieldsSheetColumn"),
   sheetPreflightWarnings: document.getElementById("sheetPreflightWarnings"),
@@ -2666,14 +2669,19 @@ function collectCustomFields() {
 function renderCustomFields(fields = []) {
   if (!el.customFieldsList) return;
   const rows = cleanCustomFields(fields);
+  if (el.customFieldsCount) el.customFieldsCount.textContent = rows.length ? tf("customFieldsCount", { count: rows.length }) : "";
   el.customFieldsList.innerHTML = rows.map((field, index) => `
     <div class="custom-field-row" data-index="${index}">
-      <input data-custom-name value="${escapeHtml(customFieldDisplayName(field.name))}" placeholder="${escapeHtml(t("customFieldNamePlaceholder"))}">
-      <input data-custom-value value="${escapeHtml(field.value)}" placeholder="${escapeHtml(t("customFieldValuePlaceholder"))}">
-      <label class="custom-field-write-toggle" data-state="${field.writeToSheet ? "on" : "off"}">
-        <input data-custom-write type="checkbox" ${field.writeToSheet ? "checked" : ""}>
-        <span>${escapeHtml(field.writeToSheet ? t("customFieldWriteOn") : t("customFieldWriteOff"))}</span>
-      </label>
+      <div class="custom-field-card">
+        <div class="custom-field-card-head">
+          <input data-custom-name value="${escapeHtml(customFieldDisplayName(field.name))}" placeholder="${escapeHtml(t("customFieldNamePlaceholder"))}">
+          <label class="custom-field-write-toggle" data-state="${field.writeToSheet ? "on" : "off"}">
+            <input data-custom-write type="checkbox" ${field.writeToSheet ? "checked" : ""}>
+            <span>${escapeHtml(field.writeToSheet ? t("customFieldWriteOn") : t("customFieldWriteOff"))}</span>
+          </label>
+        </div>
+        <input data-custom-value value="${escapeHtml(field.value)}" placeholder="${escapeHtml(t("customFieldValuePlaceholder"))}">
+      </div>
       <button type="button" class="custom-field-remove" data-index="${index}">×</button>
     </div>
   `).join("");
@@ -2681,7 +2689,8 @@ function renderCustomFields(fields = []) {
 
 function renderCustomFieldsSheetControls() {
   if (!el.customFieldsSheetColumn || !el.writeCustomFields) return;
-  el.customFieldsSheetColumn.disabled = !el.writeCustomFields.checked;
+  el.writeCustomFields.checked = true;
+  el.customFieldsSheetColumn.disabled = false;
 }
 
 async function applySheetColumnPreset(columns, message) {

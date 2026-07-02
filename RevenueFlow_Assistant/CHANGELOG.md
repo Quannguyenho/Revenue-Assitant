@@ -1,5 +1,13 @@
 # RevenueFlow Assistant Changelog
 
+## v6.13.0 - Compact Detail Write Controls
+
+- Updated the package version to `6.13.0`.
+- Moved email detail write controls into compact review cards inside the `Review payment` section.
+- Removed the bulky all-or-nothing detail checkbox row from the visible review flow.
+- Kept per-detail `Write` / `Skip` controls, with only selected details written to the Sheet detail column.
+- Added a bounded detail list height so extra extracted email details do not make the side panel overly long.
+
 ## v6.12.0 - Adaptive Email Details Review
 
 - Updated the package version to `6.12.0`.
