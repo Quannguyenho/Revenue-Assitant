@@ -1,5 +1,14 @@
 # RevenueFlow Assistant Changelog
 
+## v6.11.0 - Visible Auto Rate Guard
+
+- Updated the package version to `6.11.0`.
+- Added a compact live USD/VND rate strip on the main screen so users can see the active rate without opening Settings.
+- Auto-refresh now runs before scanning/importing payments and before creating or saving Sheet rows.
+- Added refresh de-duplication so overlapping rate requests wait for one shared result instead of racing.
+- Saved rate metadata so reloads can show whether the current rate is live or saved/manual.
+- Kept the manual refresh button as an optional recovery/control action, not a required workflow step.
+
 ## v6.10.0 - Live Exchange Rate Refresh
 
 - Updated the package version to `6.10.0`.

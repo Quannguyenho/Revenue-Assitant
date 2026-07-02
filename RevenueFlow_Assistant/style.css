@@ -237,6 +237,15 @@ body.dark .guided-setup-card[data-state="missing"]{background:linear-gradient(13
 .gmail-account-bar small{margin:0 0 2px}
 .gmail-account-bar strong{display:block;overflow-wrap:anywhere;font-size:13px}
 .gmail-account-bar button{flex-shrink:0}
+.live-rate-strip{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0;padding:10px 12px;border:1px solid rgba(37,99,235,.22);border-radius:12px;background:linear-gradient(135deg,rgba(239,246,255,.96),rgba(240,253,244,.9));}
+.live-rate-strip small{display:block;margin:0 0 2px;color:var(--muted);font-weight:700}
+.live-rate-strip strong{display:inline-block;margin-right:8px;font-size:14px}
+.live-rate-strip button{flex-shrink:0;min-height:34px;padding:7px 11px;border-radius:10px}
+.live-rate-status{font-size:11px;font-weight:800;color:var(--muted)}
+.live-rate-status[data-state="live"]{color:#047857}
+.live-rate-status[data-state="manual"]{color:#b45309}
+.live-rate-status[data-state="updating"]{color:var(--primary)}
+body.dark .live-rate-strip{background:linear-gradient(135deg,rgba(30,41,59,.9),rgba(20,83,45,.22));border-color:rgba(96,165,250,.28)}
 @media (max-width:460px){.gmail-account-bar{align-items:stretch;flex-direction:column}.gmail-account-bar button{width:100%}}
 
 .workflow-guide{
@@ -2760,6 +2769,9 @@ body.ux-v23.compact-ui{
 .compact-ui .gmail-account-bar small{font-size:10px}
 .compact-ui .gmail-account-bar strong{font-size:12px;word-break:break-word}
 .compact-ui .gmail-account-bar button{min-height:34px;padding:7px 10px;border-radius:10px}
+.compact-ui .live-rate-strip{margin:8px 0;padding:8px 10px;border-radius:10px}
+.compact-ui .live-rate-strip strong{font-size:13px}
+.compact-ui .live-rate-strip button{min-height:32px;padding:6px 9px}
 
 .compact-ui .setup-checklist{
   grid-template-columns:repeat(3,minmax(0,1fr));

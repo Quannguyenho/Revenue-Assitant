@@ -12,6 +12,8 @@ let connectedGmail = "";
 let lastVerifiedSheetWriteAt = "";
 let lastVerifiedSheetWrite = null;
 let lastRateRefreshAt = "";
+let lastRateInfo = null;
+let rateRefreshPromise = null;
 let gmailScanStats = { queried: 0, ignored: 0, unmatched: 0, matched: 0 };
 let gatewayRules = [];
 let workflowContext = {
@@ -77,8 +79,9 @@ function serializePaymentSourceRules(rules) {
 }
 
 const defaultConfig = {
-  configVersion: "6.10.0",
+  configVersion: "6.11.0",
   rate: 26124,
+  rateInfo: null,
   product: "",
   rulesText: defaultRules.map((r) => `${r.amount}=${r.name}`).join("\n"),
   productAliases: defaultProductAliases,
@@ -320,6 +323,11 @@ const labels = {
     settingsToggleTitle: "Mở cấu hình",
     rateSettingsTitle: "Tỷ giá & hóa đơn",
     rateSettingsHelp: "RevenueFlow tự cập nhật tỷ giá khi bạn dùng extension. Bấm Cập nhật tỷ giá nếu muốn lấy giá mới ngay.",
+    liveRateLabel: "Tỷ giá USD/VND",
+    refreshRateNow: "Làm mới",
+    rateUpdatingShort: "đang cập nhật",
+    rateManualFallbackShort: "đang dùng tỷ giá đã lưu",
+    rateLiveShort: "tự cập nhật",
     sheetSettingsTitle: "Google Sheet & account",
     googleSheetSetupHelp: "Set where records are saved. Re-check the Sheet after changing tab name or start cell.",
     behaviorSettingsTitle: "Tự động hóa & an toàn",
@@ -833,6 +841,11 @@ const labels = {
     settingsToggleTitle: "Open settings",
     rateSettingsTitle: "Rate & invoice",
     rateSettingsHelp: "RevenueFlow auto-updates the rate while you use the extension. Click Refresh rate to load the latest rate now.",
+    liveRateLabel: "USD/VND rate",
+    refreshRateNow: "Refresh",
+    rateUpdatingShort: "updating",
+    rateManualFallbackShort: "using saved rate",
+    rateLiveShort: "auto-updated",
     sheetSettingsTitle: "Google Sheet",
     behaviorSettingsTitle: "Automation & safety",
     behaviorSettingsHelp: "Keep the defaults if unsure. These options control when RevenueFlow may copy or write data.",
@@ -1200,6 +1213,9 @@ const el = {
   quickCheckBridge: document.getElementById("quickCheckBridge"),
   quickViewBridgeRecords: document.getElementById("quickViewBridgeRecords"),
   quickOpenBridgeSetup: document.getElementById("quickOpenBridgeSetup"),
+  quickRefreshRate: document.getElementById("quickRefreshRate"),
+  liveRateValue: document.getElementById("liveRateValue"),
+  liveRateStatus: document.getElementById("liveRateStatus"),
   productRuleSuggestion: document.getElementById("productRuleSuggestion"),
   openProductRulesSettings: document.getElementById("openProductRulesSettings"),
   dismissProductRuleTip: document.getElementById("dismissProductRuleTip"),
@@ -1639,7 +1655,7 @@ function setGoogleConnectAvailable() {
 }
 
 function setBusy(isBusy) {
-  [el.autoRun, el.buildOnly, el.forceCopy, el.getRate, el.saveSettings, el.saveRules, el.copyRow, el.writeSheet, el.testSheet, el.copyAllRows, el.exportCsv, el.dashboardExportCsv, el.bulkCopyReady, el.bulkSaveReady, el.copyInvoiceDraft, el.copyAccountingRow, el.copyAccountingGuide, el.exportAccountingSample, el.exportMisaCsv, el.exportAccountingCsv].forEach((button) => {
+  [el.autoRun, el.buildOnly, el.forceCopy, el.getRate, el.quickRefreshRate, el.saveSettings, el.saveRules, el.copyRow, el.writeSheet, el.testSheet, el.copyAllRows, el.exportCsv, el.dashboardExportCsv, el.bulkCopyReady, el.bulkSaveReady, el.copyInvoiceDraft, el.copyAccountingRow, el.copyAccountingGuide, el.exportAccountingSample, el.exportMisaCsv, el.exportAccountingCsv].forEach((button) => {
     if (!button) return;
     button.disabled = isBusy;
   });
@@ -3196,41 +3212,100 @@ async function getUsdRate() {
 
 function rateSourceText(rate) {
   const value = vnd(rate.value);
-  const time = rate.updatedAt
-    ? new Date(rate.updatedAt).toLocaleString(config.language === "en" ? "en-US" : "vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })
+  const timeValue = rate.refreshedAt || rate.updatedAt || lastRateRefreshAt;
+  const time = timeValue
+    ? new Date(timeValue).toLocaleString(config.language === "en" ? "en-US" : "vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })
     : "";
   if (rate.source === "Manual") {
     return config.language === "en"
-      ? `Using current manual rate: ${value}${rate.error ? ` (${rate.error})` : ""}`
-      : `Đang dùng tỷ giá nhập tay: ${value}${rate.error ? ` (${rate.error})` : ""}`;
+      ? `Using saved/manual rate: ${value}${time ? ` · checked ${time}` : ""}${rate.error ? ` (${rate.error})` : ""}`
+      : `Đang dùng tỷ giá đã lưu/nhập tay: ${value}${time ? ` · kiểm tra ${time}` : ""}${rate.error ? ` (${rate.error})` : ""}`;
   }
   return config.language === "en"
     ? `Live rate ${rate.source}: ${value}${time ? ` · updated ${time}` : ""}`
     : `Tỷ giá realtime ${rate.source}: ${value}${time ? ` · cập nhật ${time}` : ""}`;
 }
 
-async function refreshRate(options = {}) {
-  const silent = options.silent === true;
-  if (!silent) setBusy(true);
-  try {
-    if (!silent) setStatus(config.language === "en" ? "Updating live USD/VND rate..." : "Đang cập nhật tỷ giá USD/VND realtime...", "ready");
-    const rate = await getUsdRate();
-    el.rate.value = rate.value;
-    lastRateRefreshAt = new Date().toISOString();
-    el.rateSource.textContent = rateSourceText(rate);
-    updateRow();
-    await saveConfig();
-    if (!silent) {
-      setStatus(rate.source === "Manual"
-        ? (config.language === "en" ? "Live rate unavailable. Using current manual rate." : "Chưa lấy được tỷ giá realtime. Đang dùng tỷ giá nhập tay.")
-        : (config.language === "en" ? "Live rate updated." : "Đã cập nhật tỷ giá realtime."),
-        rate.source === "Manual" ? "warning" : "success");
-    }
-  } catch (err) {
-    if (!silent) setStatus(config.language === "en" ? `Rate update failed: ${err.message}` : `Lỗi cập nhật tỷ giá: ${err.message}`, "error");
-  } finally {
-    if (!silent) setBusy(false);
+function renderRateStatus(rate = lastRateInfo) {
+  const current = rate && Number(rate.value)
+    ? rate
+    : { value: moneyNumber(el.rate.value) || defaultConfig.rate, source: "Manual", refreshedAt: lastRateRefreshAt || "" };
+  lastRateInfo = current;
+  if (el.rateSource) el.rateSource.textContent = rateSourceText(current);
+  if (el.liveRateValue) el.liveRateValue.textContent = vnd(current.value);
+  if (el.liveRateStatus) {
+    const timeValue = current.refreshedAt || current.updatedAt || lastRateRefreshAt;
+    const time = timeValue
+      ? new Date(timeValue).toLocaleTimeString(config.language === "en" ? "en-US" : "vi-VN", { hour: "2-digit", minute: "2-digit" })
+      : "";
+    const isManual = current.source === "Manual";
+    el.liveRateStatus.dataset.state = isManual ? "manual" : "live";
+    el.liveRateStatus.textContent = `${isManual ? t("rateManualFallbackShort") : t("rateLiveShort")}${time ? ` · ${time}` : ""}`;
   }
+}
+
+function setRateUiUpdating(isUpdating) {
+  if (el.quickRefreshRate) el.quickRefreshRate.disabled = isUpdating;
+  if (el.getRate) el.getRate.disabled = isUpdating;
+  if (el.liveRateStatus && isUpdating) {
+    el.liveRateStatus.dataset.state = "updating";
+    el.liveRateStatus.textContent = t("rateUpdatingShort");
+  }
+}
+
+async function refreshRate(options = {}) {
+  if (rateRefreshPromise) return rateRefreshPromise;
+  const silent = options.silent === true;
+  rateRefreshPromise = (async () => {
+    if (!silent) setBusy(true);
+    setRateUiUpdating(true);
+    try {
+      if (!silent) setStatus(config.language === "en" ? "Updating live USD/VND rate..." : "Đang cập nhật tỷ giá USD/VND realtime...", "ready");
+      const rate = await getUsdRate();
+      el.rate.value = rate.value;
+      lastRateRefreshAt = new Date().toISOString();
+      lastRateInfo = { ...rate, refreshedAt: lastRateRefreshAt };
+      renderRateStatus(lastRateInfo);
+      updateRow();
+      await saveConfig();
+      if (!silent) {
+        setStatus(rate.source === "Manual"
+          ? (config.language === "en" ? "Live rate unavailable. Using saved/manual rate." : "Chưa lấy được tỷ giá realtime. Đang dùng tỷ giá đã lưu/nhập tay.")
+          : (config.language === "en" ? "Live rate updated." : "Đã cập nhật tỷ giá realtime."),
+          rate.source === "Manual" ? "warning" : "success");
+      }
+      return lastRateInfo;
+    } catch (err) {
+      if (!silent) setStatus(config.language === "en" ? `Rate update failed: ${err.message}` : `Lỗi cập nhật tỷ giá: ${err.message}`, "error");
+      return lastRateInfo;
+    } finally {
+      setRateUiUpdating(false);
+      if (!silent) setBusy(false);
+      rateRefreshPromise = null;
+    }
+  })();
+  return rateRefreshPromise;
+}
+
+async function ensureFreshRate(options = {}) {
+  const force = options.force === true;
+  const maxAgeMs = options.maxAgeMs ?? RATE_REFRESH_INTERVAL_MS;
+  if (rateRefreshPromise) return rateRefreshPromise;
+  const refreshedAt = lastRateInfo && (lastRateInfo.refreshedAt || lastRateInfo.updatedAt || lastRateRefreshAt);
+  const refreshedTime = refreshedAt ? new Date(refreshedAt).getTime() : 0;
+  const isFresh = refreshedTime && Date.now() - refreshedTime < maxAgeMs;
+  if (!force && isFresh && lastRateInfo.source !== "Manual") return lastRateInfo;
+  return refreshRate({ silent: options.silent !== false });
+}
+
+function markManualRateEdited() {
+  lastRateRefreshAt = new Date().toISOString();
+  lastRateInfo = {
+    value: moneyNumber(el.rate.value) || defaultConfig.rate,
+    source: "Manual",
+    refreshedAt: lastRateRefreshAt
+  };
+  renderRateStatus(lastRateInfo);
 }
 
 function startRateAutoRefresh() {
@@ -3528,10 +3603,8 @@ async function buildRows({ copy = false } = {}) {
     if (!records.length || !looksLikePayPal(rawText, records[0])) throw new Error(config.language === "en" ? "No valid PayPal email detected." : "Không phát hiện email PayPal hợp lệ.");
     renderRecordSelector();
 
-    setStatus(config.language === "en" ? "Updating rate..." : "Đang cập nhật tỷ giá...", "ready");
-    const rate = await getUsdRate();
-    el.rate.value = rate.value;
-    el.rateSource.textContent = rateSourceText(rate);
+    setStatus(config.language === "en" ? "Updating live rate..." : "Đang cập nhật tỷ giá realtime...", "ready");
+    await ensureFreshRate({ force: true, silent: true });
 
     renderForm(records[0]);
     const missing = missingFields(records[0]);
@@ -3556,6 +3629,7 @@ function incrementInvoice(value) {
 }
 
 async function copyAndSave(force = false) {
+  await ensureFreshRate({ force: true, silent: true });
   const d = formData();
   const missing = missingFields(d);
   if (el.autoWriteSheet.checked && d.isDuplicate && !d.duplicateApproved) {
@@ -3604,6 +3678,7 @@ async function copyAllRows(force = false) {
   if (missingCount && el.strictValidation.checked && !force) {
     setStatus(config.language === "en" ? `Copied with ${missingCount} row(s) still needing review.` : `Đã copy, còn ${missingCount} dòng cần kiểm tra.`, "warning");
   }
+  await ensureFreshRate({ force: true, silent: true });
   const rows = makeAllRows();
   const copied = await safeCopy(rows);
   if (!copied) return;
@@ -4896,6 +4971,7 @@ async function startPaymentWorkflow() {
   setStatus(config.language === "en" ? "Scanning Gmail and preparing the latest payment..." : "Đang quét Gmail và chuẩn bị payment mới nhất...",
     "ready");
   try {
+    await ensureFreshRate({ force: true, silent: true });
     let recordsFromBridge;
     if (isCloudSyncMode()) {
       try {
@@ -4999,6 +5075,7 @@ function normalizeBridgeRecordToPaymentRecord(record) {
 async function importLatestBridgePayment() {
   setBridgeActionBusy(true);
   try {
+    await ensureFreshRate({ force: true, silent: true });
     const recordsFromBridge = await latestBridgeRecords();
     const selected = recordsFromBridge.find((record) => !record.needReview) || recordsFromBridge[0];
     if (!selected) {
@@ -5078,6 +5155,7 @@ function bulkReadyRows() {
 }
 
 async function copyReadyPayments() {
+  await ensureFreshRate({ force: true, silent: true });
   const rows = bulkReadyRows();
   if (!rows) {
     setStatus(t("bulkNoneReady"), "warning");
@@ -5094,6 +5172,7 @@ async function saveReadyPaymentsToSheet() {
     setStatus(t("bulkNoneReady"), "warning");
     return;
   }
+  await ensureFreshRate({ force: true, silent: true });
   const beforeStats = paymentQueueStats();
   const normalized = ready.map((record) => normalizeBridgeRecordToPaymentRecord(record));
   const rows = normalized.map((record) => makeRow(record)).join("\n");
@@ -5422,6 +5501,7 @@ async function saveConfig() {
   config = {
     configVersion: defaultConfig.configVersion,
     rate: moneyNumber(el.rate.value) || defaultConfig.rate,
+    rateInfo: lastRateInfo ? { ...lastRateInfo, value: moneyNumber(el.rate.value) || lastRateInfo.value || defaultConfig.rate } : (config.rateInfo || null),
     product: el.product.value,
     rulesText: el.rulesText.value,
     productAliases: currentProductAliases(),
@@ -5505,6 +5585,10 @@ function applyConfig(nextConfig) {
     config.invoiceDate = "";
   }
   el.rate.value = config.rate;
+  lastRateInfo = config.rateInfo && Number(config.rateInfo.value)
+    ? config.rateInfo
+    : { value: config.rate, source: "Manual", refreshedAt: "" };
+  lastRateRefreshAt = lastRateInfo.refreshedAt || lastRateInfo.updatedAt || "";
   el.invoiceNo.value = config.invoiceNo;
   el.invoiceDate.value = config.invoiceDate;
   el.sheetUrl.value = config.sheetUrl;
@@ -5574,6 +5658,7 @@ function applyLanguage() {
   renderThemeToggle();
   renderAccountingConnectorStatus();
   el.rateSource.textContent = el.rateSource.textContent || t("rateSourceEmpty");
+  renderRateStatus();
   fillDirectionOptions();
   fillProductOptions();
   renderProductAliasManager();
@@ -5612,6 +5697,7 @@ el.buildOnly.addEventListener("click", () => buildRows({ copy: false }));
 el.forceCopy.addEventListener("click", () => copyAndSave(true));
 el.settingsToggle.addEventListener("click", () => toggleSettingsPanel());
 el.getRate.addEventListener("click", refreshRate);
+if (el.quickRefreshRate) el.quickRefreshRate.addEventListener("click", () => refreshRate({ silent: false }));
 el.saveSettings.addEventListener("click", async () => {
   await saveConfig();
   toggleSettingsPanel(false);
@@ -5851,6 +5937,7 @@ if (el.sheetActionStatus) el.sheetActionStatus.addEventListener("click", async (
   }
 });
 el.writeSheet.addEventListener("click", async () => {
+  await ensureFreshRate({ force: true, silent: true });
   const d = formData();
   const missing = missingFields(d);
   const reviewed = d.reviewAccepted === true || d.shouldWriteToRevenueSheet === true || d.manualRevenueOverride === true;
@@ -6102,6 +6189,7 @@ Object.values(el.fields).forEach((input) => input.addEventListener("input", upda
   input.addEventListener("input", updateRow);
   input.addEventListener("change", updateRow);
 });
+if (el.rate) el.rate.addEventListener("input", markManualRateEdited);
 [el.autoCopy, el.strictValidation, el.autoIncrementInvoice, el.autoWriteSheet, el.enableEmailBridge].forEach((input) => input.addEventListener("change", scheduleSaveConfig));
 [
   el.rate,

@@ -6,7 +6,7 @@ This file records product and implementation decisions for the global Chrome ext
 
 - Global source folder: `D:\Q project\RevenueFlow_Assistant_v2_3_0_Best_UX`
 - Global package: `D:\Q project\RevenueFlow_Assistant_Latest.zip`
-- Current global release: `v6.10.0`
+- Current global release: `v6.11.0`
 - Netbase accounting-specific work belongs only in `D:\Q project\RevenueFlow_Assistant_Netbase_Local`.
 
 ## Product Direction
@@ -77,6 +77,13 @@ This file records product and implementation decisions for the global Chrome ext
 - Create versioned ZIP archives only when explicitly requested.
 
 ## Current Release Note
+
+### v6.11.0
+
+- The main screen now shows the active USD/VND rate and whether it is live or saved/manual.
+- RevenueFlow auto-refreshes the rate before payment scan/import and before building or saving Sheet rows.
+- The refresh button remains available for immediate reload, but users should not need it in the normal workflow.
+- Overlapping rate refreshes now share one request to avoid stale responses overwriting newer values.
 
 ### v6.10.0
 

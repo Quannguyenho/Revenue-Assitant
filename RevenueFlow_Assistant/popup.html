@@ -77,6 +77,14 @@
       <span data-i18n="privacyNoticeText"></span>
       <a href="privacy-policy.html" target="_blank" rel="noopener" data-i18n="privacyNoticeLink"></a>
     </div>
+    <div class="live-rate-strip" aria-label="Live USD to VND exchange rate">
+      <div>
+        <small data-i18n="liveRateLabel"></small>
+        <strong id="liveRateValue">-</strong>
+        <span id="liveRateStatus" class="live-rate-status" data-state="idle"></span>
+      </div>
+      <button id="quickRefreshRate" class="ghost" type="button" data-i18n="refreshRateNow"></button>
+    </div>
     <div id="oauthUserLog" class="oauth-user-log" hidden></div>
 
     <div class="setup-checklist" aria-label="RevenueFlow setup checklist">
