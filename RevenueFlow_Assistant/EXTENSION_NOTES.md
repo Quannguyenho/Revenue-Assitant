@@ -6,7 +6,7 @@ This file records product and implementation decisions for the global Chrome ext
 
 - Global source folder: `D:\Q project\RevenueFlow_Assistant_v2_3_0_Best_UX`
 - Global package: `D:\Q project\RevenueFlow_Assistant_Latest.zip`
-- Current global release: `v6.18.0`
+- Current global release: `v3.3.0`
 - Netbase accounting-specific work belongs only in `D:\Q project\RevenueFlow_Assistant_Netbase_Local`.
 
 ## Product Direction
@@ -77,6 +77,13 @@ This file records product and implementation decisions for the global Chrome ext
 - Create versioned ZIP archives only when explicitly requested.
 
 ## Current Release Note
+
+### v3.3.0
+
+- Public publish version set to `3.3.0`.
+- Settings now has its own close button, closes on outside click, and also closes with Escape.
+- English mode now normalizes legacy Vietnamese adaptive detail labels and recurring-fee product wording in the review form.
+- No new permissions were added; the global build remains Gmail OAuth + Google Sheets + exchange-rate only.
 
 ### v6.18.0
 

@@ -79,7 +79,7 @@ function serializePaymentSourceRules(rules) {
 }
 
 const defaultConfig = {
-  configVersion: "6.18.0",
+  configVersion: "3.3.0",
   rate: 26124,
   rateInfo: null,
   product: "",
@@ -326,6 +326,7 @@ const labels = {
     setupCardRulesTitle: "Rule",
     setupCardRulesHelp: "Bật cổng thanh toán và map sản phẩm.",
     settingsToggleTitle: "Mở cấu hình",
+    closeSettingsTitle: "Đóng cấu hình",
     rateSettingsTitle: "Tỷ giá & hóa đơn",
     rateSettingsHelp: "RevenueFlow tự cập nhật tỷ giá khi bạn dùng extension. Bấm Cập nhật tỷ giá nếu muốn lấy giá mới ngay.",
     liveRateLabel: "Tỷ giá USD/VND",
@@ -854,6 +855,7 @@ const labels = {
     setupCardRulesTitle: "Rules",
     setupCardRulesHelp: "Enable payment providers and map products.",
     settingsToggleTitle: "Open settings",
+    closeSettingsTitle: "Close settings",
     rateSettingsTitle: "Rate & invoice",
     rateSettingsHelp: "RevenueFlow auto-updates the rate while you use the extension. Click Refresh rate to load the latest rate now.",
     liveRateLabel: "USD/VND rate",
@@ -1294,6 +1296,7 @@ const el = {
   clearHistory: document.getElementById("clearHistory"),
   settingsToggle: document.getElementById("settingsToggle"),
   settingsPanel: document.getElementById("settingsPanel"),
+  closeSettings: document.getElementById("closeSettings"),
   languageToggle: document.getElementById("languageToggle"),
   themeToggle: document.getElementById("themeToggle"),
   status: document.getElementById("status"),
@@ -1618,6 +1621,16 @@ function toggleSettingsPanel(forceOpen) {
   const shouldOpen = forceOpen === undefined ? el.settingsPanel.hidden : Boolean(forceOpen);
   el.settingsPanel.hidden = !shouldOpen;
   renderSettingsToggle();
+}
+
+function closeSettingsPanel() {
+  if (!el.settingsPanel || el.settingsPanel.hidden) return;
+  toggleSettingsPanel(false);
+}
+
+function isSettingsClickTarget(target) {
+  if (!target) return false;
+  return Boolean(el.settingsPanel && el.settingsPanel.contains(target)) || Boolean(el.settingsToggle && el.settingsToggle.contains(target));
 }
 
 function tipDismissed(key) {
@@ -1968,7 +1981,7 @@ function fillProductOptions() {
   const rules = currentRules();
   const selected = REVIEW_PRODUCT_PATTERN.test(el.product.value || config.product || "") ? "" : (el.product.value || config.product || "");
   const unique = [...new Set(rules.map((r) => r.name).filter((name) => name && !REVIEW_PRODUCT_PATTERN.test(name)))];
-  el.product.innerHTML = `<option value="">${escapeHtml(t("productAuto"))}</option>` + unique.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
+  el.product.innerHTML = `<option value="">${escapeHtml(t("productAuto"))}</option>` + unique.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(displayProductName(name))}</option>`).join("");
   el.product.value = unique.includes(selected) ? selected : "";
   renderProductRuleManager();
 }
@@ -2185,35 +2198,51 @@ function cleanCustomFields(fields = []) {
 
 function customFieldDisplayName(name) {
   const raw = String(name || "").trim();
-  if (config.language !== "vi") return raw || "Detail";
   const key = raw.toLowerCase().replace(/\s+/g, " ");
-  const viMap = {
-    "outstanding balance": "Số dư còn lại",
-    "amount paid each time": "Số tiền mỗi lần thanh toán",
-    "maximum amount you can bill": "Số tiền tối đa có thể thu",
-    "next payment due": "Ngày thanh toán tiếp theo",
-    "trial period amount": "Số tiền giai đoạn dùng thử",
-    "start date": "Ngày bắt đầu",
-    "end date": "Ngày kết thúc",
-    "receipt number": "Mã biên nhận",
-    "invoice number": "Số hóa đơn",
-    "payment method": "Phương thức thanh toán",
-    "billing period": "Kỳ thanh toán",
-    "plan": "Gói dịch vụ",
-    "item": "Sản phẩm",
-    "quantity": "Số lượng",
-    "sku": "SKU",
-    "subtotal": "Tạm tính",
-    "tax": "Thuế",
-    "discount": "Giảm giá",
-    "shipping": "Phí vận chuyển",
-    "fee": "Phí",
-    "net amount": "Số tiền thực nhận",
-    "card": "Thẻ",
-    "source": "Nguồn",
-    "detail": "Chi tiết"
+  const fieldPairs = {
+    "outstanding balance": ["Outstanding balance", "Số dư còn lại"],
+    "amount paid each time": ["Amount paid each time", "Số tiền mỗi lần thanh toán"],
+    "maximum amount you can bill": ["Maximum amount you can bill", "Số tiền tối đa có thể thu"],
+    "next payment due": ["Next payment due", "Ngày thanh toán tiếp theo"],
+    "trial period amount": ["Trial period amount", "Số tiền giai đoạn dùng thử"],
+    "start date": ["Start date", "Ngày bắt đầu"],
+    "end date": ["End date", "Ngày kết thúc"],
+    "receipt number": ["Receipt number", "Mã biên nhận"],
+    "invoice number": ["Invoice number", "Số hóa đơn"],
+    "payment method": ["Payment method", "Phương thức thanh toán"],
+    "billing period": ["Billing period", "Kỳ thanh toán"],
+    "plan": ["Plan", "Gói dịch vụ"],
+    "item": ["Product", "Sản phẩm"],
+    "product": ["Product", "Sản phẩm"],
+    "quantity": ["Quantity", "Số lượng"],
+    "sku": ["SKU", "SKU"],
+    "subtotal": ["Subtotal", "Tạm tính"],
+    "tax": ["Tax", "Thuế"],
+    "discount": ["Discount", "Giảm giá"],
+    "shipping": ["Shipping", "Phí vận chuyển"],
+    "fee": ["Fee", "Phí"],
+    "net amount": ["Net amount", "Số tiền thực nhận"],
+    "card": ["Card", "Thẻ"],
+    "source": ["Source", "Nguồn"],
+    "detail": ["Detail", "Chi tiết"]
   };
-  return viMap[key] || raw || "Chi tiết";
+  const viToEn = Object.values(fieldPairs).reduce((map, pair) => {
+    map[pair[1].toLowerCase().replace(/\s+/g, " ")] = pair[0];
+    return map;
+  }, {});
+  if (config.language !== "vi") {
+    if (fieldPairs[key]) return fieldPairs[key][0];
+    return viToEn[key] || raw || "Detail";
+  }
+  return (fieldPairs[key] && fieldPairs[key][1]) || raw || "Chi tiết";
+}
+
+function displayProductName(name) {
+  const raw = String(name || "").trim();
+  if (!raw) return "";
+  if (config.language === "en" && /^phí định kỳ\s*\/\s*recurring fees$/i.test(raw)) return "Recurring fees";
+  if (config.language === "vi" && /^recurring fees$/i.test(raw)) return "Phí định kỳ / Recurring fees";
+  return raw;
 }
 
 function customFieldsText(fields = [], options = {}) {
@@ -2702,7 +2731,7 @@ function formData() {
     d[key] = el.fields[key].value.trim();
   });
   const typedProduct = el.customProductName ? el.customProductName.value.trim() : "";
-  d.product = typedProduct || el.product.value || d.product || guessProduct(d.usd);
+  d.product = displayProductName(typedProduct || el.product.value || d.product || guessProduct(d.usd));
   d.note = d.note || d.provider || "Payment";
   if (el.shouldWriteRevenue) {
     d.shouldWriteToRevenueSheet = el.shouldWriteRevenue.checked;
@@ -2756,12 +2785,15 @@ function renderForm(d = {}) {
   Object.keys(el.fields).forEach((key) => {
     el.fields[key].value = d[key] || "";
   });
+  if (d.product) d.product = displayProductName(d.product);
   fillProductOptions();
-  if (d.product && !REVIEW_PRODUCT_PATTERN.test(d.product) && !Array.from(el.product.options).some((option) => option.value === d.product)) {
+  if (d.product && !REVIEW_PRODUCT_PATTERN.test(d.product) && !Array.from(el.product.options).some((option) => option.value === d.product || displayProductName(option.value) === d.product)) {
     addProductRuleItem(d.product, d.usd, { select: false });
+    fillProductOptions();
   }
-  el.product.value = d.product && !REVIEW_PRODUCT_PATTERN.test(d.product) ? d.product : "";
-  if (el.customProductName) el.customProductName.value = d.product && !REVIEW_PRODUCT_PATTERN.test(d.product) ? d.product : "";
+  const matchingProductOption = Array.from(el.product.options).find((option) => option.value === d.product || displayProductName(option.value) === d.product);
+  el.product.value = matchingProductOption && d.product && !REVIEW_PRODUCT_PATTERN.test(d.product) ? matchingProductOption.value : "";
+  if (el.customProductName) el.customProductName.value = d.product && !REVIEW_PRODUCT_PATTERN.test(d.product) ? displayProductName(d.product) : "";
   if (el.reviewProvider) el.reviewProvider.value = d.provider || d.note || t("unknownLabel");
   if (el.reviewEmailType) el.reviewEmailType.value = displayEmailType(d.emailType || d.type || "unknown");
   if (el.reviewStatus) el.reviewStatus.value = displayRecordStatus(d.status || "Info");
@@ -4930,17 +4962,17 @@ function activeSourceName() {
 function localEmailSyncFriendlyError(rawError = "", code = "") {
   const value = String(rawError || "");
   const lower = value.toLowerCase();
-  if (code === "IMAP_AUTH_FAILED" || /authenticationfailed|authentication failed|login/.test(lower)) {
+  if (/authenticationfailed|authentication failed|login/.test(lower)) {
     return config.language === "en"
       ? "RevenueFlow could not connect to Gmail. Reconnect Gmail, then try again."
       : "RevenueFlow chưa kết nối được Gmail. Kết nối lại Gmail rồi thử tiếp.";
   }
-  if (code === "IMAP_CONNECTION_FAILED" || /timeout|eacces|econnrefused|enotfound|etimedout|network|certificate/.test(lower)) {
+  if (/timeout|eacces|econnrefused|enotfound|etimedout|network|certificate/.test(lower)) {
     return config.language === "en"
       ? "RevenueFlow cannot reach Gmail right now. Check internet access, reconnect Gmail, then try again."
       : "RevenueFlow chưa kết nối được Gmail lúc này. Kiểm tra mạng, kết nối lại Gmail rồi thử tiếp.";
   }
-  if (code === "IMAP_CONFIG_MISSING" || /imap_user|imap_password/.test(lower)) {
+  if (/account|oauth|permission|scope/.test(lower)) {
     return config.language === "en"
       ? "Gmail is not connected yet. Click Connect Gmail, then try again."
       : "Gmail chưa được kết nối. Bấm Kết nối Gmail rồi thử lại.";
@@ -5131,12 +5163,12 @@ async function checkEmailBridge() {
       } catch (error) {
         if (!canFallbackToLocalSync(error)) throw error;
         await switchToLocalSyncFallback();
-        setStatus(config.language === "en" ? "Checking local Email Sync..." : "Đang kiểm tra Email Sync local...", "ready");
+        setStatus(config.language === "en" ? "Checking Gmail..." : "Đang kiểm tra Gmail...", "ready");
         return await checkLocalEmailBridge();
       }
     }
     if (isLocalEmailSyncMode()) {
-      setStatus(config.language === "en" ? "Checking local Email Sync..." : "Đang kiểm tra Email Sync local...", "ready");
+      setStatus(config.language === "en" ? "Checking Gmail..." : "Đang kiểm tra Gmail...", "ready");
       return await checkLocalEmailBridge();
     }
     setStatus(config.language === "en" ? "Checking Gmail permission..." : "Đang kiểm tra quyền Gmail...", "ready");
@@ -5290,7 +5322,7 @@ function normalizeBridgeRecordToPaymentRecord(record) {
     text: sourceText
   }).value;
   return {
-    source: record.source || (isCloudSyncMode() ? "cloudSync" : (isLocalEmailSyncMode() ? "localImap" : "directGmail")),
+    source: record.source || "directGmail",
     date: record.date || "",
     type,
     customerName: record.customerName || "",
@@ -5924,6 +5956,7 @@ function applyLanguage() {
   renderPaymentInbox();
   renderGmailAccount();
   renderSetupChecklist();
+  if (records.length) renderForm(records[activeIndex] || {});
   renderSheetPreview(formData());
   if (!records.length) setStatus(t("ready"), "ready");
   if (!workflowContext.emailBridge) setBridgeStatus(t("bridgeStatusIdle"), "idle");
@@ -5954,6 +5987,15 @@ el.autoRun.addEventListener("click", () => buildRows({ copy: true }));
 el.buildOnly.addEventListener("click", () => buildRows({ copy: false }));
 el.forceCopy.addEventListener("click", () => copyAndSave(true));
 el.settingsToggle.addEventListener("click", () => toggleSettingsPanel());
+if (el.closeSettings) el.closeSettings.addEventListener("click", closeSettingsPanel);
+document.addEventListener("pointerdown", (event) => {
+  if (!el.settingsPanel || el.settingsPanel.hidden) return;
+  if (isSettingsClickTarget(event.target)) return;
+  closeSettingsPanel();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeSettingsPanel();
+});
 el.getRate.addEventListener("click", refreshRate);
 if (el.quickRefreshRate) el.quickRefreshRate.addEventListener("click", () => refreshRate({ silent: false }));
 el.saveSettings.addEventListener("click", async () => {

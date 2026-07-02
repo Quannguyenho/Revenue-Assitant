@@ -1,5 +1,13 @@
 # RevenueFlow Assistant Changelog
 
+## v3.3.0 - Publish Readiness Polish
+
+- Set the public publish version to `3.3.0`.
+- Added an in-panel Settings close button so Settings can always be closed even after scrolling.
+- Added click-outside and Escape-key behavior to close Settings without requiring Save.
+- Cleaned English-mode review display for legacy Vietnamese adaptive detail labels and recurring-fee product names.
+- Kept the global build scoped to Gmail OAuth, Google Sheets, and live USD/VND exchange-rate access only.
+
 ## v6.18.0 - Update Saved Sheet Row
 
 - Updated the package version to `6.18.0`.
