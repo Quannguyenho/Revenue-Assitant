@@ -1,5 +1,13 @@
 # RevenueFlow Assistant Changelog
 
+## v6.15.0 - Adaptive Details Inside Review Grid
+
+- Updated the package version to `6.15.0`.
+- Removed the separate `Email details` panel from the normal review flow.
+- Rendered detected email details as adaptive field cards directly inside the main `Review payment` grid.
+- Kept per-field `Write` / `Skip` controls on each adaptive detail card.
+- Preserved the same Sheet detail-column behavior while making the review form shorter and more global.
+
 ## v6.14.0 - Inline Review Field Write Toggles
 
 - Updated the package version to `6.14.0`.

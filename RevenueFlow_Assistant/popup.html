@@ -234,6 +234,13 @@
       </div>
       <input id="customProductName" data-placeholder-i18n="quickProductNamePlaceholder">
     </div>
+    <div id="customFieldsList" class="form-grid ux-form-grid adaptive-fields-grid"></div>
+    <div class="adaptive-fields-tools">
+      <small id="customFieldsCount"></small>
+      <input id="writeCustomFields" type="checkbox" hidden checked>
+      <label class="custom-fields-column"><span data-i18n="customFieldsSheetColumnLabel"></span><input id="customFieldsSheetColumn" placeholder="L"></label>
+      <button id="addCustomField" class="ghost" type="button" data-i18n="addCustomFieldTitle"></button>
+    </div>
     <div class="product-quick-tools" aria-label="Customize products">
       <div class="product-quick-inputs">
         <input id="quickProductAmount" type="number" min="0" step="0.01" placeholder="USD">
@@ -260,20 +267,6 @@
       <label><span data-i18n="emailTypeLabel"></span><input id="reviewEmailType" readonly></label>
       <label><span data-i18n="statusLabel"></span><input id="reviewStatus" readonly></label>
       <label><span data-i18n="revenueImpactLabel"></span><input id="reviewRevenueImpact" readonly></label>
-    </div>
-    <div class="custom-fields-panel">
-      <div class="custom-fields-head">
-        <div>
-          <span data-i18n="customFieldsTitle"></span>
-          <small id="customFieldsCount"></small>
-        </div>
-        <div class="custom-fields-actions">
-          <input id="writeCustomFields" type="checkbox" hidden checked>
-          <label class="custom-fields-column"><span data-i18n="customFieldsSheetColumnLabel"></span><input id="customFieldsSheetColumn" placeholder="L"></label>
-          <button id="addCustomField" class="icon-mini primary-mini" type="button" data-title-i18n="addCustomFieldTitle" aria-label="Add detail">+</button>
-        </div>
-      </div>
-      <div id="customFieldsList" class="custom-fields-list"></div>
     </div>
     <label class="revenue-write-toggle"><input id="shouldWriteRevenue" type="checkbox"><span data-i18n="allowRevenueWriteLabel"></span></label>
     <div id="revenueWriteReason" class="revenue-write-reason"></div>

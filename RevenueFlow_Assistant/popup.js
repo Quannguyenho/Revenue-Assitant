@@ -79,7 +79,7 @@ function serializePaymentSourceRules(rules) {
 }
 
 const defaultConfig = {
-  configVersion: "6.14.0",
+  configVersion: "6.15.0",
   rate: 26124,
   rateInfo: null,
   product: "",
@@ -2700,7 +2700,7 @@ function formData() {
 
 function collectCustomFields() {
   if (!el.customFieldsList) return cleanCustomFields(records[activeIndex] && records[activeIndex].customFields);
-  return cleanCustomFields(Array.from(el.customFieldsList.querySelectorAll(".custom-field-row")).map((row) => ({
+  return cleanCustomFields(Array.from(el.customFieldsList.querySelectorAll("[data-custom-field-card]")).map((row) => ({
     name: row.querySelector("[data-custom-name]")?.value || "",
     value: row.querySelector("[data-custom-value]")?.value || "",
     writeToSheet: row.querySelector("[data-custom-write]")?.checked === true
@@ -2712,19 +2712,15 @@ function renderCustomFields(fields = []) {
   const rows = cleanCustomFields(fields);
   if (el.customFieldsCount) el.customFieldsCount.textContent = rows.length ? tf("customFieldsCount", { count: rows.length }) : "";
   el.customFieldsList.innerHTML = rows.map((field, index) => `
-    <div class="custom-field-row" data-index="${index}">
-      <div class="custom-field-card">
-        <div class="custom-field-card-head">
-          <input data-custom-name value="${escapeHtml(customFieldDisplayName(field.name))}" placeholder="${escapeHtml(t("customFieldNamePlaceholder"))}">
-          <label class="custom-field-write-toggle" data-state="${field.writeToSheet ? "on" : "off"}">
-            <input data-custom-write type="checkbox" ${field.writeToSheet ? "checked" : ""}>
-            <span>${escapeHtml(field.writeToSheet ? t("customFieldWriteOn") : t("customFieldWriteOff"))}</span>
-          </label>
-        </div>
-        <input data-custom-value value="${escapeHtml(field.value)}" placeholder="${escapeHtml(t("customFieldValuePlaceholder"))}">
-      </div>
+    <label class="adaptive-field-card" data-custom-field-card data-index="${index}">
+      <input data-custom-name class="adaptive-field-name" value="${escapeHtml(customFieldDisplayName(field.name))}" placeholder="${escapeHtml(t("customFieldNamePlaceholder"))}">
+      <label class="field-write-toggle adaptive-field-write" data-state="${field.writeToSheet ? "on" : "off"}">
+        <input data-custom-write type="checkbox" ${field.writeToSheet ? "checked" : ""}>
+        <span>${escapeHtml(field.writeToSheet ? t("sheetFieldWriteOn") : t("sheetFieldWriteOff"))}</span>
+      </label>
+      <input data-custom-value value="${escapeHtml(field.value)}" placeholder="${escapeHtml(t("customFieldValuePlaceholder"))}">
       <button type="button" class="custom-field-remove" data-index="${index}">×</button>
-    </div>
+    </label>
   `).join("");
 }
 
@@ -5902,11 +5898,11 @@ if (el.customFieldsList) {
   el.customFieldsList.addEventListener("change", (event) => {
     const checkbox = event.target.closest("[data-custom-write]");
     if (!checkbox) return;
-    const toggle = checkbox.closest(".custom-field-write-toggle");
+    const toggle = checkbox.closest(".adaptive-field-write");
     if (toggle) {
       toggle.dataset.state = checkbox.checked ? "on" : "off";
       const label = toggle.querySelector("span");
-      if (label) label.textContent = checkbox.checked ? t("customFieldWriteOn") : t("customFieldWriteOff");
+      if (label) label.textContent = checkbox.checked ? t("sheetFieldWriteOn") : t("sheetFieldWriteOff");
     }
     const d = records[activeIndex] || {};
     d.customFields = collectCustomFields();
